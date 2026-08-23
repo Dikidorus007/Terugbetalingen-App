@@ -1,0 +1,1436 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terugbetalingen</title>
+  <link rel="icon" href="favicon.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: rgba(255, 255, 255, 0.85);
+      --card-solid: #ffffff;
+      --text: #1c1c1e;
+      --muted: #8e8e93;
+      --line: #e5e5ea;
+      --primary: #007aff;
+      --primary-hover: #0062cc;
+      --green: #34c759;
+      --orange: #ff9500;
+      --red: #ff3b30;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid var(--line);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .metric.positive { color: var(--green); }
+    .metric.negative { color: var(--red); }
+    .metric.warning { color: var(--orange); }
+
+    .checkbox-cell { width: 40px; text-align: center; }
+    input[type="checkbox"] { 
+      width: 18px; 
+      height: 18px; 
+      accent-color: var(--primary); 
+      cursor: pointer; 
+      border-radius: 4px;
+    }
+
+    .group-actions-bar {
+      padding: 12px 14px;
+      background: rgba(250, 250, 250, 0.8);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .history-item-single {
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      background: var(--card-solid);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+
+    details.history-group {
+      position: relative;
+      background: var(--card-solid);
+      border: 1px solid #d1d1d6;
+      border-radius: 12px;
+      margin-top: 10px;
+      margin-bottom: 24px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.25s ease;
+    }
+
+    details.history-group:not([open])::before {
+      content: "";
+      position: absolute;
+      top: -5px;
+      left: 10px;
+      right: 10px;
+      height: 100%;
+      background: #eef0f5;
+      border: 1px solid #c7c7cc;
+      border-radius: 12px;
+      z-index: -1;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    }
+
+    details.history-group:not([open])::after {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 20px;
+      right: 20px;
+      height: 100%;
+      background: #e5e5ea;
+      border: 1px solid #bcbcbf;
+      border-radius: 12px;
+      z-index: -2;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    details.history-group summary {
+      font-weight: normal;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+    details.history-group summary::-webkit-details-marker { display: none; }
+
+    .history-group-items {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .history-sub-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 8px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 200;
+    }
+
+    .auth-card {
+      background: var(--card-solid);
+      border-radius: 18px;
+      width: min(420px, 100%);
+      padding: 32px 28px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--line);
+    }
+
+    .auth-card h2 { margin-top: 0; margin-bottom: 6px; font-size: 24px; }
+    .auth-card p { color: var(--muted); font-size: 14px; margin-top: 0; margin-bottom: 20px; }
+
+    .wrap {
+      max-width: 1100px;
+      margin: auto;
+      padding: 32px 20px 60px;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+    .sub { color: var(--muted); margin: 4px 0 0; font-size: 15px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .expenses-card { display: flex; flex-direction: column; }
+    .metric { font-size: 26px; font-weight: 700; margin-top: 6px; letter-spacing: -0.5px; }
+    .label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button:hover { background: var(--primary-hover); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.secondary { background: rgba(120, 120, 128, 0.12); color: var(--text); }
+    button.secondary:hover { background: rgba(120, 120, 128, 0.2); }
+    button.success { background: var(--green); color: white; }
+    button.success:hover { background: #2fb34f; }
+    button.danger { background: rgba(255, 59, 48, 0.12); color: var(--red); }
+    button.danger:hover { background: rgba(255, 59, 48, 0.2); }
+
+    .tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+    .tab-btn { background: none; color: var(--muted); border-radius: 0; padding: 8px 16px; font-weight: 600; border-bottom: 2px solid transparent; }
+    .tab-btn:hover { background: none; color: var(--text); }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: stretch; transition: grid-template-columns 0.2s ease; }
+    .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+
+    h2 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.4px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; color: var(--muted); }
+
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--card-solid);
+      font: inherit;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus { border-color: var(--primary); }
+    select:disabled { background: #f0f0f5; color: var(--muted); cursor: not-allowed; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .full { width: 100%; margin-top: 16px; }
+
+    .people-container { max-height: 380px; overflow-y: auto; padding-right: 2px; }
+    .table-container {
+      flex: 1; min-height: 320px; max-height: 380px; overflow-y: auto;
+      border-radius: 10px; border: 1px solid var(--line); background: var(--card-solid);
+      display: flex; flex-direction: column;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; position: sticky; top: 0; background: #fafafa; z-index: 1; }
+    tr:last-child td { border-bottom: 0; }
+
+    .status-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .status-badge.open { background: rgba(255, 59, 48, 0.12); color: var(--red); }
+    .status-badge.pending { background: rgba(255, 149, 0, 0.15); color: var(--orange); }
+
+    .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 10px; }
+    .page-info { font-size: 13px; color: var(--muted); }
+    .page-btn-group { display: flex; gap: 6px; }
+
+    .empty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); padding: 36px 10px; font-size: 14px; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 20px; background: rgba(120, 120, 128, 0.12); font-size: 12px; font-weight: 500; }
+
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+
+    .modal {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+      display: none; align-items: center; justify-content: center; padding: 18px; z-index: 100;
+    }
+
+    .modal.open { display: flex; }
+    .modal-card {
+      background: var(--card-solid); border-radius: 18px; width: min(540px, 100%);
+      max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--line);
+    }
+
+    .small-modal { width: min(440px, 100%); }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .close { background: rgba(120, 120, 128, 0.12); color: var(--text); border-radius: 50%; width: 28px; height: 28px; padding: 0; font-size: 16px; }
+    .close:hover { background: rgba(120, 120, 128, 0.25); }
+
+    .user-bar { display: flex; align-items: center; gap: 12px; font-size: 14px; position: relative; }
+    .user-info-box { display: flex; flex-direction: column; align-items: flex-end; }
+    .user-name { font-weight: 600; color: var(--text); }
+    .user-balance { font-size: 12px; font-weight: 600; margin-top: 1px; }
+
+    .avatar-btn {
+      width: 42px; height: 42px; border-radius: 50%; background: var(--primary);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px; cursor: pointer; user-select: none;
+      background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden;
+    }
+
+    .dropdown-menu {
+      position: absolute; top: 50px; right: 0; background: var(--card-solid);
+      border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      width: 170px; display: none; flex-direction: column; overflow: hidden; z-index: 50;
+    }
+    .dropdown-menu.open { display: flex; }
+    .dropdown-item { padding: 12px 16px; font-size: 14px; color: var(--text); background: none; border: none; text-align: left; cursor: pointer; width: 100%; border-radius: 0; justify-content: flex-start; }
+    .dropdown-item:hover { background: rgba(0, 0, 0, 0.05); }
+    .dropdown-item.danger-text { color: var(--red); }
+
+    .settings-section { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 8px; }
+    .settings-section h3 { font-size: 14px; font-weight: 700; margin: 12px 0 4px; color: var(--text); }
+
+    .msg-box { font-size: 13px; margin-top: 10px; padding: 8px 12px; border-radius: 8px; display: none; }
+    .msg-box.success-msg { background: rgba(52, 199, 89, 0.15); color: var(--green); display: block; }
+    .msg-box.error-msg { background: rgba(255, 59, 48, 0.15); color: var(--red); display: block; }
+
+    @media(max-width: 950px) {
+      .grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .layout { grid-template-columns: 1fr !important; }
+      .top { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- Loading Screen -->
+<div id="loadingScreen" class="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Gegevens laden...</div>
+</div>
+
+<!-- Auth Screen -->
+<div id="authScreen" class="auth-overlay" style="display: none;">
+  <div class="auth-card">
+    <h2 id="authTitle">Welkom terug</h2>
+    <p id="authSub">Log in om verder te gaan naar Terugbetalingen.</p>
+
+    <div id="authStatusMsg" class="msg-box"></div>
+
+    <form id="authForm">
+      <label for="authEmail">E-mailadres</label>
+      <input id="authEmail" type="email" required placeholder="naam@voorbeeld.be">
+
+      <div id="passwordField">
+        <label for="authPassword">Wachtwoord</label>
+        <input id="authPassword" type="password" required placeholder="••••••••">
+      </div>
+
+      <button id="authSubmitBtn" class="full" type="submit">Inloggen</button>
+    </form>
+  </div>
+</div>
+
+<!-- Main Application -->
+<div id="appWrap" class="wrap" style="display: none;">
+  <div class="top">
+    <div>
+      <h1>💶 Terugbetalingen</h1>
+      <p class="sub">Houd eenvoudig bij wie nog geld moet terugbetalen.</p>
+    </div>
+    <div class="user-bar">
+      <div class="user-info-box">
+        <span id="userNameDisplay" class="user-name"></span>
+        <span id="userPrevMonthBalance" class="user-balance">Saldo deze maand: €0,00</span>
+      </div>
+      <div id="avatarBtn" class="avatar-btn" onclick="toggleDropdown(event)">
+        <span id="avatarInitials">?</span>
+      </div>
+
+      <div id="dropdownMenu" class="dropdown-menu">
+        <button class="dropdown-item" onclick="openModal('settingsModal')">⚙️ Instellingen</button>
+        <button class="dropdown-item danger-text" onclick="handleLogout()">🚪 Uitloggen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="label">Nog te ontvangen</div><div id="receive" class="metric positive">€0,00</div></div>
+    <div class="card"><div class="label">Nog te betalen</div><div id="pay" class="metric negative">€0,00</div></div>
+    <div class="card"><div class="label">In verwerking</div><div id="pendingMetric" class="metric warning">€0,00</div></div>
+    <div class="card"><div class="label">Openstaande kosten</div><div id="open" class="metric">0</div></div>
+  </div>
+
+  <div class="toolbar">
+    <button id="addExpenseBtn" onclick="openModal('expenseModal')">＋ Nieuwe kost</button>
+    <button class="secondary" onclick="openModal('historyModal');renderHistory()">Historiek</button>
+  </div>
+
+  <div class="layout" id="mainLayout">
+    <div class="card" id="peopleCard">
+      <div class="section-title">
+        <h2>Personen</h2>
+        <span class="pill">Klik om te filteren</span>
+      </div>
+      <form id="personForm" class="row" style="margin-bottom: 12px;">
+        <input id="personName" required placeholder="Naam">
+        <button type="submit">Toevoegen</button>
+      </form>
+      <div id="people" class="people-container"></div>
+    </div>
+
+    <div class="card expenses-card">
+      <div class="tabs">
+        <button class="tab-btn active" id="tabOpen" onclick="switchTab('open')">Openstaande kosten</button>
+        <button class="tab-btn" id="tabOutgoing" onclick="switchTab('outgoing')">Uitgaande kosten</button>
+      </div>
+      
+      <div class="table-container">
+        <div id="expenses" style="display:flex; flex-direction:column; flex:1;"></div>
+      </div>
+
+      <div class="pagination">
+        <span class="page-info" id="pageInfo">Pagina 1 van 1</span>
+        <div class="page-btn-group">
+          <button class="secondary small" id="prevPage" onclick="changePage(-1)">Vorige</button>
+          <button class="secondary small" id="nextPage" onclick="changePage(1)">Volgende</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Instellingen -->
+<div id="settingsModal" class="modal" onclick="if(event.target===this)closeModal('settingsModal')">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><h2>⚙️ Instellingen</h2><button class="close" onclick="closeModal('settingsModal')">×</button></div>
+    
+    <div id="settingsStatusMsg" class="msg-box"></div>
+
+    <div class="settings-section" style="border-top:none; padding-top:0;">
+      <h3>Profiel</h3>
+      <label for="displayNameInput">Weergavenaam</label>
+      <input id="displayNameInput" placeholder="Jouw weergavenaam">
+
+      <label for="avatarUrlInput">Profielfoto URL</label>
+      <input id="avatarUrlInput" placeholder="https://example.com/foto.jpg">
+
+      <label for="avatarFileInput">Of kies een foto-bestand</label>
+      <input id="avatarFileInput" type="file" accept="image/*">
+      
+      <button class="full" type="button" onclick="saveProfileSettings()">Profiel opslaan</button>
+    </div>
+
+    <div class="settings-section">
+      <h3>Wachtwoord wijzigen</h3>
+      <label for="newPasswordInput">Nieuw wachtwoord</label>
+      <input id="newPasswordInput" type="password" placeholder="Minimaal 6 tekens">
+
+      <label for="confirmPasswordInput">Bevestig nieuw wachtwoord</label>
+      <input id="confirmPasswordInput" type="password" placeholder="Herhaal wachtwoord">
+
+      <button class="full secondary" type="button" onclick="changePassword()">Wachtwoord bijwerken</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nieuwe kost -->
+<div id="expenseModal" class="modal" onclick="if(event.target===this)closeModal('expenseModal')">
+  <div class="modal-card">
+    <div class="modal-head"><h2>Nieuwe kost</h2><button class="close" onclick="closeModal('expenseModal')">×</button></div>
+    <form id="expenseForm">
+      <label for="description">Omschrijving</label>
+      <input id="description" required placeholder="Bijv. Restaurant, Delhaize">
+
+      <div class="row">
+        <div><label for="amount">Totaalbedrag (€)</label><input id="amount" type="number" min="0.01" step="0.01" required placeholder="0,00"></div>
+        <div><label for="date">Datum</label><input id="date" type="date" required></div>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <div>
+          <label for="payer">Betaald door</label>
+          <select id="payer" disabled required></select>
+        </div>
+        <div>
+          <label for="recipient">Voor</label>
+          <select id="recipient" required onchange="renderSplitPeople()"></select>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <button type="button" id="toggleSplitBtn" class="secondary full" onclick="toggleSplitSection()">⚙️ Verdeling aanpassen</button>
+      </div>
+
+      <div id="splitSection" style="display:none; margin-top:12px; padding:12px; background:#f7f7fa; border-radius:12px; border:1px solid var(--line);">
+        <label style="margin:0 0 8px 0; font-weight:600; color:var(--text);">Splitsing aanpassen</label>
+        <div class="muted" style="font-size:12px; margin-bottom:10px;">Vink meerdere personen aan om de kost te verdelen. Standaard staat de geselecteerde persoon op 100%.</div>
+        <div id="splitPeople"></div>
+        <div id="splitTotal" class="msg-box" style="display:block; margin-top:8px;">Verdeling: 100%</div>
+      </div>
+
+      <button class="full" type="submit">Kost toevoegen</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Historiek -->
+<div id="historyModal" class="modal" onclick="if(event.target===this)closeModal('historyModal')">
+  <div class="modal-card">
+    <div class="modal-head"><h2>Historiek</h2><button class="close" onclick="closeModal('historyModal')">×</button></div>
+    <div id="history"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://spkbprqsclypdidoadrm.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_N0qp_InFiqyV8ycP61aVBQ_nasLzXBA";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let data = { people: [], peopleObjects: [], expenses: [] };
+let selectedPerson = null;
+let currentUserName = "";
+let currentUserEmail = "";
+let avatarUrl = "";
+let currentPage = 1;
+const itemsPerPage = 5;
+let userRole = 'user';
+let activeTab = 'open';
+let selectedExpenses = new Set();
+let isInitialLoad = true;
+
+const euro = n => new Intl.NumberFormat("nl-BE", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
+const today = () => new Date().toISOString().slice(0, 10);
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c])) }
+
+document.getElementById("date").value = today();
+
+function showLoading() {
+  document.getElementById("loadingScreen").style.display = "flex";
+}
+
+function hideLoading() {
+  document.getElementById("loadingScreen").style.display = "none";
+}
+
+function toggleDropdown(e) {
+  e.stopPropagation();
+  document.getElementById("dropdownMenu").classList.toggle("open");
+}
+
+document.addEventListener("click", () => {
+  const menu = document.getElementById("dropdownMenu");
+  if (menu) menu.classList.remove("open");
+});
+
+function showAuthMsg(text, isError = false) {
+  const box = document.getElementById("authStatusMsg");
+  if (!text) {
+    box.style.display = "none";
+    return;
+  }
+  box.textContent = text;
+  box.className = `msg-box ${isError ? 'error-msg' : 'success-msg'}`;
+}
+
+async function ensurePersonExists(name, email) {
+  if (!email) return;
+  try {
+    const { data: existing, error: selectError } = await supabaseClient
+      .from('people')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (!existing && !selectError) {
+      await supabaseClient
+        .from('people')
+        .insert([{ name: name || email.split('@')[0], email, role: 'user' }]);
+    }
+  } catch (e) {
+    console.warn("Kon persoon niet toevoegen aan tabel:", e);
+  }
+}
+
+document.getElementById("authForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  showAuthMsg("");
+  const submitBtn = document.getElementById("authSubmitBtn");
+  submitBtn.disabled = true;
+
+  try {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+
+    submitBtn.textContent = "Inloggen...";
+    const { data: authData, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      showAuthMsg("Inloggen mislukt: " + error.message, true);
+    } else if (authData.session) {
+      await initSession(authData.session);
+    }
+  } catch (err) {
+    showAuthMsg("Er is een onverwachte fout opgetreden: " + err.message, true);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Inloggen";
+  }
+});
+
+async function handleLogout() {
+  await supabaseClient.auth.signOut();
+  selectedPerson = null;
+  document.getElementById("appWrap").style.display = "none";
+  document.getElementById("authScreen").style.display = "flex";
+  document.getElementById("authForm").reset();
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById("tabOpen").classList.toggle("active", tab === 'open');
+  document.getElementById("tabOutgoing").classList.toggle("active", tab === 'outgoing');
+  currentPage = 1;
+  selectedExpenses.clear();
+  renderExpenses();
+}
+
+function showMsg(text, isError = false) {
+  const box = document.getElementById("settingsStatusMsg");
+  box.textContent = text;
+  box.className = `msg-box ${isError ? 'error-msg' : 'success-msg'}`;
+}
+
+async function saveProfileSettings() {
+  const newName = document.getElementById("displayNameInput").value.trim();
+  let finalAvatarUrl = document.getElementById("avatarUrlInput").value.trim();
+  const fileInput = document.getElementById("avatarFileInput");
+
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from('avatars')
+      .upload(fileName, file, { cacheControl: '3600', upsert: true });
+
+    if (uploadError) {
+      showMsg("Fout bij uploaden afbeelding: " + uploadError.message, true);
+      return;
+    }
+
+    const { data: publicUrlData } = supabaseClient.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    finalAvatarUrl = publicUrlData.publicUrl;
+    document.getElementById("avatarUrlInput").value = finalAvatarUrl;
+    fileInput.value = "";
+  }
+
+  const updateData = {};
+  if (newName) updateData.display_name = newName;
+  if (finalAvatarUrl) updateData.avatar_url = finalAvatarUrl;
+
+  const { data: updatedAuth, error } = await supabaseClient.auth.updateUser({ data: updateData });
+
+  if (error) {
+    showMsg("Fout bij opslaan: " + error.message, true);
+    return;
+  }
+
+  if (currentUserEmail) {
+    const dbUpdate = {};
+    if (newName) dbUpdate.name = newName;
+    if (finalAvatarUrl) dbUpdate.avatar_url = finalAvatarUrl;
+
+    await supabaseClient
+      .from('people')
+      .update(dbUpdate)
+      .eq('email', currentUserEmail);
+
+    if (newName) currentUserName = newName;
+  }
+
+  if (finalAvatarUrl) {
+    avatarUrl = finalAvatarUrl;
+  } else if (updatedAuth?.user?.user_metadata?.avatar_url) {
+    avatarUrl = updatedAuth.user.user_metadata.avatar_url;
+  }
+  
+  showMsg("Profiel succesvol bijgewerkt!");
+  await loadData(false);
+}
+
+async function changePassword() {
+  const pwd = document.getElementById("newPasswordInput").value;
+  const confirmPwd = document.getElementById("confirmPasswordInput").value;
+
+  if (!pwd || pwd.length < 6) {
+    showMsg("Wachtwoord moet minimaal 6 tekens bevatten.", true);
+    return;
+  }
+
+  if (pwd !== confirmPwd) {
+    showMsg("Wachtwoorden komen niet overeen.", true);
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.updateUser({ password: pwd });
+
+  if (error) {
+    showMsg("Fout bij wijzigen wachtwoord: " + error.message, true);
+  } else {
+    showMsg("Wachtwoord succesvol gewijzigd!");
+    document.getElementById("newPasswordInput").value = "";
+    document.getElementById("confirmPasswordInput").value = "";
+  }
+}
+
+async function fetchUserRole(user) {
+  if (!user || !user.email) return 'user';
+  
+  const { data: person } = await supabaseClient
+    .from('people')
+    .select('role')
+    .eq('email', user.email)
+    .maybeSingle();
+
+  userRole = person?.role || 'user';
+  applyRolePermissions();
+  return userRole;
+}
+
+function applyRolePermissions() {
+  const isAdmin = userRole === 'admin';
+  const peopleCard = document.getElementById("peopleCard");
+  const mainLayout = document.getElementById("mainLayout");
+
+  if (!isAdmin) {
+    if (peopleCard) peopleCard.style.display = "none";
+    if (mainLayout) mainLayout.style.gridTemplateColumns = "1fr";
+  } else {
+    if (peopleCard) peopleCard.style.display = "block";
+    if (mainLayout) mainLayout.style.gridTemplateColumns = "320px 1fr";
+  }
+}
+
+function calculateMonthBalance(targetPerson, monthKey) {
+  let balance = 0;
+  data.expenses.forEach(e => {
+    (e.splits || []).forEach(s => {
+      if (s.status === "paid") {
+        const dateStr = s.paidAt || e.date;
+        if (dateStr && dateStr.substring(0, 7) === monthKey) {
+          const amt = Number(s.amount);
+          if (e.payer === targetPerson) balance += amt;
+          if (s.person === targetPerson) balance -= amt;
+        }
+      }
+    });
+  });
+  return balance;
+}
+
+function updateHeaderUserDisplay() {
+  const isAdmin = userRole === 'admin';
+  const activeName = (isAdmin && selectedPerson) ? selectedPerson : currentUserName;
+  
+  const personObj = data.peopleObjects.find(p => p.name === activeName);
+  const activeAvatar = (personObj && personObj.avatar_url) 
+    ? personObj.avatar_url 
+    : (activeName === currentUserName ? avatarUrl : "");
+
+  document.getElementById("userNameDisplay").textContent = activeName;
+
+  const btn = document.getElementById("avatarBtn");
+  const initials = document.getElementById("avatarInitials");
+  if (activeAvatar) {
+    btn.style.backgroundImage = `url("${activeAvatar}")`;
+    initials.style.display = "none";
+  } else {
+    btn.style.backgroundImage = "none";
+    initials.textContent = activeName ? activeName.charAt(0).toUpperCase() : "?";
+    initials.style.display = "inline";
+  }
+
+  const now = new Date();
+  const currentMonthKey = now.toISOString().slice(0, 7);
+  const balance = calculateMonthBalance(activeName, currentMonthKey);
+  
+  const monthNames = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+  const label = `${monthNames[now.getMonth()]} '${now.getFullYear().toString().slice(-2)}`;
+  const balanceEl = document.getElementById("userPrevMonthBalance");
+
+  if (balance >= 0) {
+    balanceEl.textContent = `Saldo ${label}: +${euro(balance)}`;
+    balanceEl.style.color = "var(--green)";
+  } else {
+    balanceEl.textContent = `Saldo ${label}: -${euro(Math.abs(balance))}`;
+    balanceEl.style.color = "var(--red)";
+  }
+}
+
+async function loadData(isInitial = false) {
+  if (isInitial) showLoading();
+  try {
+    const { data: peopleData } = await supabaseClient.from('people').select('*').order('name');
+    const { data: expensesData } = await supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+
+    data.peopleObjects = peopleData || [];
+    data.people = data.peopleObjects.map(p => p.name);
+    data.expenses = expensesData || [];
+
+    if (userRole === 'admin' && !selectedPerson) {
+      selectedPerson = currentUserName;
+    }
+
+    render();
+  } finally {
+    if (isInitial) hideLoading();
+  }
+}
+
+function renderPeople() {
+  const container = document.getElementById("people");
+  if (!container) return;
+
+  if (!data.peopleObjects || data.peopleObjects.length === 0) {
+    container.innerHTML = `<div class="empty">Geen personen gevonden.</div>`;
+    return;
+  }
+
+  container.innerHTML = data.peopleObjects.map(p => {
+    const isSelected = selectedPerson === p.name;
+    return `
+      <div 
+        onclick="selectPerson('${esc(p.name)}')" 
+        style="padding: 10px 12px; margin-bottom: 6px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: ${isSelected ? 'rgba(0,122,255,0.1)' : 'var(--card-solid)'}; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--line)'};"
+      >
+        <span style="font-weight: 600;">${esc(p.name)}</span>
+        <span class="pill">${esc(p.role || 'user')}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectPerson(name) {
+  if (selectedPerson === name) {
+    selectedPerson = currentUserName;
+  } else {
+    selectedPerson = name;
+  }
+  selectedExpenses.clear();
+  currentPage = 1;
+  render();
+}
+
+function render() {
+  let toReceive = 0;
+  let toPay = 0;
+  let inProcessing = 0;
+  let openCount = 0;
+
+  const targetPerson = (userRole === 'admin' && selectedPerson) ? selectedPerson : currentUserName;
+
+  data.expenses.forEach(e => {
+    (e.splits || []).forEach(s => {
+      if (s.status !== "paid") {
+        const amt = Number(s.amount);
+
+        if (e.payer === targetPerson && s.person !== targetPerson) {
+          openCount++;
+          if (s.status === "pending_confirmation") {
+            inProcessing += amt;
+          } else {
+            toReceive += amt;
+          }
+        }
+        if (s.person === targetPerson && e.payer !== targetPerson) {
+          openCount++;
+          if (s.status === "pending_confirmation") {
+            inProcessing += amt;
+          } else {
+            toPay += amt;
+          }
+        }
+      }
+    });
+  });
+
+  document.getElementById("receive").textContent = euro(toReceive);
+  document.getElementById("pay").textContent = euro(toPay);
+  document.getElementById("pendingMetric").textContent = euro(inProcessing);
+  document.getElementById("open").textContent = openCount;
+
+  const payer = document.getElementById("payer");
+  payer.innerHTML = `<option value="${esc(currentUserName)}">${esc(currentUserName)}</option>`;
+  payer.disabled = true;
+
+  const recipientSelect = document.getElementById("recipient");
+  const otherPeople = data.people.filter(p => p !== currentUserName);
+  recipientSelect.innerHTML = otherPeople.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+
+  updateHeaderUserDisplay();
+  renderPeople();
+  renderExpenses();
+}
+
+function getFilteredRows() {
+  let rows = [];
+  const targetPerson = (userRole === 'admin' && selectedPerson) ? selectedPerson : currentUserName;
+
+  data.expenses.forEach((e, ei) => {
+    (e.splits || []).forEach((s, si) => {
+      if (s.status !== "paid") {
+        if (activeTab === 'open') {
+          if (s.person === targetPerson && e.payer !== targetPerson) {
+            rows.push({ e, s, ei, si });
+          }
+        } else if (activeTab === 'outgoing') {
+          if (e.payer === targetPerson && s.person !== targetPerson) {
+            rows.push({ e, s, ei, si });
+          }
+        }
+      }
+    });
+  });
+  return rows;
+}
+
+function toggleSelection(key) {
+  if (selectedExpenses.has(key)) selectedExpenses.delete(key);
+  else selectedExpenses.add(key);
+  renderExpenses();
+}
+
+function renderExpenses() {
+  const rows=getFilteredRows();
+  const totalPages=Math.ceil(rows.length/itemsPerPage)||1;
+  if(currentPage>totalPages) currentPage=totalPages;
+  const start=(currentPage-1)*itemsPerPage;
+  const paginatedRows=rows.slice(start,start+itemsPerPage);
+  document.getElementById("pageInfo").textContent=`Pagina ${currentPage} van ${totalPages}`;
+  document.getElementById("prevPage").disabled=currentPage<=1;
+  document.getElementById("nextPage").disabled=currentPage>=totalPages;
+  if(!rows.length){document.getElementById("expenses").innerHTML=`<div class="empty">Geen kosten gevonden voor dit tabblad.</div>`;selectedExpenses.clear();return;}
+  const visibleKeys=paginatedRows.map(({ei,si})=>`${ei}-${si}`);
+  const allVisibleSelected=visibleKeys.length>0&&visibleKeys.every(k=>selectedExpenses.has(k));
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:#fafafa;">
+    <button class="secondary small" onclick="toggleSelectAllVisible()">${allVisibleSelected?'Deselecteer alles':'Alles selecteren'}</button>
+    <span class="muted" style="font-size:12px;">${selectedExpenses.size?`${selectedExpenses.size} geselecteerd`:'Klik op een kost om te selecteren'}</span>
+  </div><table><thead><tr><th class="checkbox-cell"></th><th>Omschrijving</th><th>Bedrag</th><th>Door / Voor</th><th>Status</th></tr></thead><tbody>`;
+  html+=paginatedRows.map(({e,s,ei,si})=>{
+    const key=`${ei}-${si}`,checked=selectedExpenses.has(key),pending=s.status==='pending_confirmation';
+    const badge=pending?`<span class="status-badge pending">In verwerking</span>`:`<span class="status-badge open">Openstaand</span>`;
+    return `<tr onclick="toggleSelection('${key}')" style="cursor:pointer;${checked?'background:rgba(0,122,255,.06);':''}">
+      <td class="checkbox-cell"><input type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();toggleSelection('${key}')"></td>
+      <td><b>${esc(e.description)}</b><div class="muted" style="font-size:11px;margin-top:2px;">${esc(e.date||'')}</div></td>
+      <td>${euro(s.amount)}</td><td><span class="muted" style="font-size:12px">${esc(e.payer)} ➔ ${esc(s.person)}</span></td><td>${badge}</td>
+    </tr>`;
+  }).join('');
+  html+=`</tbody></table>`;
+  if(selectedExpenses.size){
+    const selectedRows=rows.filter(({ei,si})=>selectedExpenses.has(`${ei}-${si}`));
+    const total=selectedRows.reduce((n,{s})=>n+Number(s.amount),0);
+    const outgoing=activeTab==='outgoing';
+    html+=`<div class="group-actions-bar"><span class="muted" style="font-size:13px"><b>${selectedExpenses.size}</b> geselecteerd · <b>${euro(total)}</b></span><button class="small ${outgoing?'success':''}" onclick="processGroupAction('${outgoing?'confirm':'pay'}')">${outgoing?'✓ Ontvangst bevestigen':'Markeer als betaald'}</button></div>`;
+  }
+  document.getElementById("expenses").innerHTML=html;
+}
+
+function toggleSelectAllVisible(){
+  const rows=getFilteredRows(),start=(currentPage-1)*itemsPerPage,visible=rows.slice(start,start+itemsPerPage).map(({ei,si})=>`${ei}-${si}`);
+  const all=visible.length&&visible.every(k=>selectedExpenses.has(k));
+  visible.forEach(k=>all?selectedExpenses.delete(k):selectedExpenses.add(k));
+  renderExpenses();
+}
+
+async function processGroupAction(actionType) {
+  if (selectedExpenses.size === 0) return;
+  const currentGroupId = Date.now().toString();
+  const dateToday = today();
+  
+  let updates = {};
+  
+  selectedExpenses.forEach(key => {
+    const [ei, si] = key.split('-');
+    const expense = data.expenses[ei];
+    const split = expense.splits[si];
+    
+    if (!updates[expense.id]) updates[expense.id] = { expense, modified: false };
+    
+    if (actionType === 'pay' && split.status !== "paid") {
+       split.status = "pending_confirmation";
+       split.markedPaidAt = dateToday;
+       split.groupId = currentGroupId;
+       updates[expense.id].modified = true;
+    } else if (actionType === 'confirm' && split.status === "pending_confirmation") {
+       split.status = "paid";
+       split.paidAt = dateToday;
+       split.groupId = currentGroupId;
+       updates[expense.id].modified = true;
+    }
+  });
+  
+  for (const id in updates) {
+    if (updates[id].modified) {
+      const e = updates[id].expense;
+      const allPaid = e.splits.every(s => s.status === "paid");
+      const newStatus = allPaid ? "paid" : "open";
+      await supabaseClient.from('expenses').update({ splits: e.splits, status: newStatus }).eq('id', e.id);
+    }
+  }
+  
+  selectedExpenses.clear();
+  await loadData(false);
+}
+
+function renderHistory() {
+  const targetPerson = (userRole === 'admin' && selectedPerson) ? selectedPerson : currentUserName;
+  
+  const now = new Date();
+  const currentMonthKey = now.toISOString().slice(0, 7);
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMonthKey = prevMonthDate.toISOString().slice(0, 7);
+
+  const monthNames = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"];
+
+  const currentMonthPaidShares = [];
+  const prevMonthPaidShares = [];
+
+  data.expenses.forEach(e => {
+    (e.splits || []).forEach(s => {
+      if (s.status === "paid") {
+        if (e.payer === targetPerson || s.person === targetPerson) {
+          const dateStr = s.paidAt || e.date;
+          const monthKey = dateStr ? dateStr.substring(0, 7) : "";
+          
+          if (monthKey === currentMonthKey) {
+            currentMonthPaidShares.push({ e, s });
+          } else if (monthKey === prevMonthKey) {
+            prevMonthPaidShares.push({ e, s });
+          }
+        }
+      }
+    });
+  });
+
+  if (!currentMonthPaidShares.length && !prevMonthPaidShares.length) {
+    document.getElementById("history").innerHTML = `<div class="empty">Nog geen betaalde kosten in de historiek voor ${esc(targetPerson)}.</div>`;
+    return;
+  }
+
+  let html = "";
+
+  if (prevMonthPaidShares.length) {
+    let prevMonthTotal = 0;
+    prevMonthPaidShares.forEach(item => {
+      const isIncoming = item.e.payer === targetPerson;
+      const amt = Number(item.s.amount);
+      prevMonthTotal += isIncoming ? amt : -amt;
+    });
+
+    const prevMonthName = `${monthNames[prevMonthDate.getMonth()]} ${prevMonthDate.getFullYear()}`;
+    const prevColor = prevMonthTotal >= 0 ? 'var(--green)' : 'var(--red)';
+    const prevPrefix = prevMonthTotal >= 0 ? '+' : '-';
+
+    html += `
+      <details class="history-group" style="border: 2px solid var(--primary);">
+        <summary>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <b style="font-size:15px; color:var(--primary);">📅 Saldo ${prevMonthName} (Afgelopen Maand)</b>
+              <div class="muted" style="font-size:11px; margin-top:2px;">Klik om alle kosten van deze maand te bekijken</div>
+            </div>
+            <span style="color:${prevColor}; font-weight:700; font-size:16px;">${prevPrefix}${euro(Math.abs(prevMonthTotal))}</span>
+          </div>
+        </summary>
+        <div class="history-group-items">
+          ${prevMonthPaidShares.map(({e, s}) => {
+            const isIncoming = e.payer === targetPerson;
+            const displayName = isIncoming ? s.person : e.payer;
+            const subColor = isIncoming ? 'var(--green)' : 'var(--red)';
+            const subPrefix = isIncoming ? '+' : '-';
+            return `
+              <div class="history-sub-item">
+                <div>
+                  <div><b>${esc(e.description)}</b> (${esc(displayName)})</div>
+                  <div class="muted" style="font-size:10px;">${s.paidAt || e.date}</div>
+                </div>
+                <span style="font-weight:600; color:${subColor};">${subPrefix}${euro(s.amount)}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </details>
+      <div style="margin: 16px 0 10px 0; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Lopende Maand (${monthNames[now.getMonth()]})</div>
+    `;
+  }
+
+  if (currentMonthPaidShares.length) {
+    const grouped = {};
+    currentMonthPaidShares.forEach(item => {
+      const gid = item.s.groupId || `indiv-${Math.random()}`; 
+      if (!grouped[gid]) grouped[gid] = { items: [], total: 0, date: item.s.paidAt || item.e.date };
+      grouped[gid].items.push(item);
+      
+      const isIncoming = item.e.payer === targetPerson;
+      const amt = Number(item.s.amount);
+      grouped[gid].total += isIncoming ? amt : -amt;
+    });
+
+    html += Object.keys(grouped).sort((a,b) => grouped[b].date.localeCompare(grouped[a].date)).map(gid => {
+      const group = grouped[gid];
+      
+      if (group.items.length === 1) {
+        const { e, s } = group.items[0];
+        const isIncoming = e.payer === targetPerson;
+        const displayName = isIncoming ? s.person : e.payer;
+        const amountColor = isIncoming ? 'var(--green)' : 'var(--red)';
+        const amountPrefix = isIncoming ? '+' : '-';
+
+        return `
+          <div class="history-item-single">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div>${esc(displayName)}</div>
+                <div class="muted" style="font-size:11px; margin-top:2px;">${s.paidAt || e.date}</div>
+              </div>
+              <span style="color:${amountColor}; font-weight:600;">${amountPrefix}${euro(s.amount)}</span>
+            </div>
+            <div class="muted" style="font-size:13px; margin-top:4px;">${esc(e.description)}</div>
+          </div>
+        `;
+      } else {
+        const firstItem = group.items[0];
+        const isGroupIncoming = firstItem.e.payer === targetPerson;
+        const groupDisplayName = isGroupIncoming ? firstItem.s.person : firstItem.e.payer;
+        const groupColor = group.total >= 0 ? 'var(--green)' : 'var(--red)';
+        const groupPrefix = group.total >= 0 ? '+' : '-';
+
+        return `
+          <details class="history-group">
+            <summary>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <div>${esc(groupDisplayName)}</div>
+                  <div class="muted" style="font-size:11px; margin-top:2px;">${group.date}</div>
+                </div>
+                <span style="color:${groupColor}; font-weight:600;">${groupPrefix}${euro(Math.abs(group.total))}</span>
+              </div>
+              <div class="muted" style="font-size:13px; margin-top:4px;">Meerdere items</div>
+            </summary>
+            <div class="history-group-items">
+              ${group.items.map(({e, s}) => {
+                const itemIncoming = e.payer === targetPerson;
+                const subColor = itemIncoming ? 'var(--green)' : 'var(--red)';
+                const subPrefix = itemIncoming ? '+' : '-';
+                return `
+                  <div class="history-sub-item">
+                    <span>${esc(e.description)}</span>
+                    <span style="font-weight:500; color:${subColor};">${subPrefix}${euro(s.amount)}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </details>
+        `;
+      }
+    }).join("");
+  } else {
+    html += `<div class="empty">Nog geen betalingen in de huidige maand.</div>`;
+  }
+
+  document.getElementById("history").innerHTML = html;
+}
+
+function openModal(id) { 
+  document.getElementById(id).classList.add("open"); 
+  if(id === 'settingsModal') {
+    const box = document.getElementById("settingsStatusMsg");
+    box.className = "msg-box";
+    box.style.display = "none";
+  }
+  if(id === 'expenseModal') {
+    const payerSelect = document.getElementById("payer");
+    payerSelect.value = currentUserName;
+    payerSelect.disabled = true;
+    
+    const splitSec = document.getElementById("splitSection");
+    const toggleBtn = document.getElementById("toggleSplitBtn");
+    splitSec.style.display = "none";
+    toggleBtn.textContent = "⚙️ Verdeling aanpassen";
+    
+    renderSplitPeople();
+  }
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+function changePage(delta) {
+  const rows = getFilteredRows();
+  const totalPages = Math.ceil(rows.length / itemsPerPage) || 1;
+  const newPage = currentPage + delta;
+  
+  if (newPage >= 1 && newPage <= totalPages) {
+    currentPage = newPage;
+    renderExpenses();
+  }
+}
+
+function toggleSplitSection() {
+  const splitSec = document.getElementById("splitSection");
+  const toggleBtn = document.getElementById("toggleSplitBtn");
+  
+  if (splitSec.style.display === "none") {
+    splitSec.style.display = "block";
+    toggleBtn.textContent = "Verberg verdeling";
+  } else {
+    splitSec.style.display = "none";
+    toggleBtn.textContent = "⚙️ Verdeling aanpassen";
+  }
+}
+
+function renderSplitPeople() {
+  const box = document.getElementById('splitPeople');
+  const recipient = document.getElementById('recipient').value;
+  const people = data.people.filter(p => p !== currentUserName);
+  
+  if (!people.length) {
+    box.innerHTML = '<div class="muted">Voeg eerst een andere persoon toe om kosten aan toe te wijzen.</div>';
+    return;
+  }
+
+  box.innerHTML = people.map(p => {
+    const isChecked = p === recipient;
+    const initialRatio = isChecked ? 100 : 0;
+    return `
+      <div style="display:grid; grid-template-columns:1fr 90px 18px; gap:8px; align-items:center; margin:6px 0">
+        <label style="margin:0; font-weight:500; cursor:pointer;">
+          <input type="checkbox" class="split-check" data-person="${esc(p)}" ${isChecked ? 'checked' : ''} onchange="rebalanceSplitPercentages()"> ${esc(p)}
+        </label>
+        <input class="split-ratio" data-person="${esc(p)}" type="number" min="0" step="0.01" value="${initialRatio}" oninput="updateSplitTotal()">
+        <span>%</span>
+      </div>
+    `;
+  }).join('');
+  
+  updateSplitTotal();
+}
+
+function rebalanceSplitPercentages() {
+  const rows = [...document.querySelectorAll('#splitPeople > div')];
+  const checked = rows.filter(r => r.querySelector('.split-check').checked);
+  const share = checked.length ? 100 / checked.length : 0;
+
+  rows.forEach(r => {
+    const isChecked = r.querySelector('.split-check').checked;
+    r.querySelector('.split-ratio').value = isChecked ? share.toFixed(2) : '0';
+  });
+  
+  updateSplitTotal();
+}
+
+function updateSplitTotal() {
+  const rows = [...document.querySelectorAll('#splitPeople > div')];
+  const total = rows.reduce((n, r) => {
+    const isChecked = r.querySelector('.split-check').checked;
+    return n + (isChecked ? (Number(r.querySelector('.split-ratio').value) || 0) : 0);
+  }, 0);
+  const box = document.getElementById('splitTotal');
+
+  box.textContent = `Verdeling: ${total.toFixed(2)}%`;
+  box.className = `msg-box ${Math.abs(total - 100) < 0.01 ? 'success-msg' : 'error-msg'}`;
+  box.style.display = 'block';
+}
+
+document.getElementById("expenseForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const amount = Number(document.getElementById("amount").value);
+  const payer = currentUserName;
+
+  const rows = [...document.querySelectorAll('#splitPeople > div')];
+  const chosen = rows.filter(r => r.querySelector('.split-check').checked);
+
+  if (!chosen.length) {
+    alert("Selecteer a.u.b. ten minste 1 persoon voor wie deze kost is.");
+    return;
+  }
+
+  const totalRatio = chosen.reduce((n, r) => n + (Number(r.querySelector('.split-ratio').value) || 0), 0);
+
+  if (Math.abs(totalRatio - 100) > 0.01) {
+    alert("Zorg ervoor dat het totale percentage van de aangeduide personen exact 100% is.");
+    return;
+  }
+
+  const splits = chosen.map(r => ({
+    person: r.querySelector('.split-check').dataset.person,
+    ratio: Number(r.querySelector('.split-ratio').value),
+    amount: Math.round(amount * Number(r.querySelector('.split-ratio').value)) / 100,
+    status: "open",
+    paidAt: null
+  }));
+
+  const diff = amount - splits.reduce((n, s) => n + s.amount, 0);
+  splits[splits.length - 1].amount = Math.round((splits[splits.length - 1].amount + diff) * 100) / 100;
+
+  const newExpense = {
+    description: document.getElementById("description").value.trim(),
+    amount,
+    date: document.getElementById("date").value,
+    payer,
+    splits,
+    status: "open"
+  };
+
+  await supabaseClient.from('expenses').insert([newExpense]);
+  closeModal("expenseModal");
+  document.getElementById("expenseForm").reset();
+  document.getElementById("date").value = today();
+  
+  await loadData(false);
+});
+
+document.getElementById("personForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const nameInput = document.getElementById("personName");
+  const name = nameInput.value.trim();
+  if (!name) return;
+
+  await supabaseClient.from('people').insert([{ name, role: 'user' }]);
+  nameInput.value = "";
+  await loadData(false);
+});
+
+async function initSession(session) {
+  const showLoader = isInitialLoad;
+  if (showLoader) showLoading();
+
+  try {
+    if (session) {
+      document.getElementById("authScreen").style.display = "none";
+      document.getElementById("appWrap").style.display = "block";
+
+      currentUserEmail = session.user.email || "";
+      const meta = session.user.user_metadata || {};
+      currentUserName = meta.display_name || currentUserEmail.split('@')[0];
+
+      const { data: personData } = await supabaseClient
+        .from('people')
+        .select('avatar_url, name')
+        .eq('email', currentUserEmail)
+        .maybeSingle();
+
+      if (personData) {
+        if (personData.name) currentUserName = personData.name;
+        avatarUrl = personData.avatar_url || meta.avatar_url || "";
+      } else {
+        avatarUrl = meta.avatar_url || "";
+      }
+
+      document.getElementById("displayNameInput").value = currentUserName;
+      document.getElementById("avatarUrlInput").value = avatarUrl;
+      
+      await ensurePersonExists(currentUserName, currentUserEmail);
+      await fetchUserRole(session.user);
+      await loadData(showLoader);
+    } else {
+      document.getElementById("appWrap").style.display = "none";
+      document.getElementById("authScreen").style.display = "flex";
+      hideLoading();
+    }
+  } catch (err) {
+    console.error("Fout bij laden van sessie:", err);
+    hideLoading();
+  } finally {
+    isInitialLoad = false;
+  }
+}
+
+supabaseClient.auth.getSession().then(({ data: { session } }) => {
+  initSession(session);
+});
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    initSession(session);
+    openModal('settingsModal');
+    showMsg("Voer hier je nieuwe wachtwoord in om de herstelprocedure te voltooien.");
+  } else if (event === 'SIGNED_OUT') {
+    initSession(null);
+  } else if (event === 'SIGNED_IN' && session) {
+    initSession(session);
+  }
+});
+</script>
+</body>
+</html>
