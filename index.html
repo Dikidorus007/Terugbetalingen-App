@@ -32,7 +32,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Loading Overlay */
     .loading-overlay {
       position: fixed;
       inset: 0;
@@ -55,40 +54,28 @@
       margin-bottom: 16px;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .loading-text {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--muted);
-    }
-
+    .loading-text { font-size: 15px; font-weight: 600; color: var(--muted); }
     .metric.positive { color: var(--green); }
     .metric.negative { color: var(--red); }
     .metric.warning { color: var(--orange); }
 
     .checkbox-cell { width: 40px; text-align: center; }
-    input[type="checkbox"] { 
-      width: 18px; 
-      height: 18px; 
-      accent-color: var(--primary); 
-      cursor: pointer; 
-      border-radius: 4px;
-    }
+    input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); cursor: pointer; }
+    input[type="checkbox"] { width: 18px; height: 18px; border-radius: 4px; }
 
-    .group-actions-bar {
+    .selection-actions-bar {
+      margin-top: 12px;
       padding: 12px 14px;
-      background: rgba(250, 250, 250, 0.8);
-      border-top: 1px solid var(--line);
+      background: #fafafa;
+      border: 1px solid var(--line);
+      border-radius: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom-left-radius: 10px;
-      border-bottom-right-radius: 10px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .history-item-single {
@@ -111,40 +98,7 @@
       transition: all 0.25s ease;
     }
 
-    details.history-group:not([open])::before {
-      content: "";
-      position: absolute;
-      top: -5px;
-      left: 10px;
-      right: 10px;
-      height: 100%;
-      background: #eef0f5;
-      border: 1px solid #c7c7cc;
-      border-radius: 12px;
-      z-index: -1;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
-    }
-
-    details.history-group:not([open])::after {
-      content: "";
-      position: absolute;
-      top: -10px;
-      left: 20px;
-      right: 20px;
-      height: 100%;
-      background: #e5e5ea;
-      border: 1px solid #bcbcbf;
-      border-radius: 12px;
-      z-index: -2;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-    }
-
-    details.history-group summary {
-      font-weight: normal;
-      cursor: pointer;
-      list-style: none;
-      user-select: none;
-    }
+    details.history-group summary { font-weight: normal; cursor: pointer; list-style: none; user-select: none; }
     details.history-group summary::-webkit-details-marker { display: none; }
 
     .history-group-items {
@@ -155,7 +109,6 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      animation: fadeIn 0.2s ease-out;
     }
 
     .history-sub-item {
@@ -165,11 +118,6 @@
       padding: 6px 10px;
       background: rgba(0, 0, 0, 0.03);
       border-radius: 8px;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-3px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .auth-overlay {
@@ -195,30 +143,12 @@
     .auth-card h2 { margin-top: 0; margin-bottom: 6px; font-size: 24px; }
     .auth-card p { color: var(--muted); font-size: 14px; margin-top: 0; margin-bottom: 20px; }
 
-    .wrap {
-      max-width: 1100px;
-      margin: auto;
-      padding: 32px 20px 60px;
-    }
-
-    .top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
+    .wrap { max-width: 1100px; margin: auto; padding: 32px 20px 60px; }
+    .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
     h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
     .sub { color: var(--muted); margin: 4px 0 0; font-size: 15px; }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
     .card {
       background: var(--card);
       backdrop-filter: blur(20px);
@@ -253,6 +183,7 @@
     button:disabled { opacity: 0.6; cursor: not-allowed; }
     button.secondary { background: rgba(120, 120, 128, 0.12); color: var(--text); }
     button.secondary:hover { background: rgba(120, 120, 128, 0.2); }
+    button.small { padding: 6px 12px; font-size: 12px; }
     button.success { background: var(--green); color: white; }
     button.success:hover { background: #2fb34f; }
     button.danger { background: rgba(255, 59, 48, 0.12); color: var(--red); }
@@ -263,7 +194,7 @@
     .tab-btn:hover { background: none; color: var(--text); }
     .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-    .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: stretch; transition: grid-template-columns 0.2s ease; }
+    .layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
     .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 
     h2 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.4px; }
@@ -278,7 +209,6 @@
       font: inherit;
       color: var(--text);
       outline: none;
-      transition: border-color 0.2s;
     }
 
     input:focus, select:focus { border-color: var(--primary); }
@@ -287,16 +217,21 @@
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .full { width: 100%; margin-top: 16px; }
 
-    .people-container { max-height: 380px; overflow-y: auto; padding-right: 2px; }
+    .accounts-container { max-height: 420px; overflow-y: auto; }
+    
     .table-container {
-      flex: 1; min-height: 320px; max-height: 380px; overflow-y: auto;
-      border-radius: 10px; border: 1px solid var(--line); background: var(--card-solid);
-      display: flex; flex-direction: column;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--card-solid);
+      overflow-x: auto;
     }
 
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
-    th { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; position: sticky; top: 0; background: #fafafa; z-index: 1; }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; background: #fafafa; user-select: none; }
+    th.sortable { cursor: pointer; }
+    th.sortable:hover { color: var(--text); }
     tr:last-child td { border-bottom: 0; }
 
     .status-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
@@ -309,6 +244,7 @@
 
     .empty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); padding: 36px 10px; font-size: 14px; }
     .pill { display: inline-block; padding: 4px 10px; border-radius: 20px; background: rgba(120, 120, 128, 0.12); font-size: 12px; font-weight: 500; }
+    .pill.shared { background: rgba(0, 122, 255, 0.15); color: var(--primary); }
 
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
 
@@ -328,7 +264,6 @@
     .small-modal { width: min(440px, 100%); }
     .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .close { background: rgba(120, 120, 128, 0.12); color: var(--text); border-radius: 50%; width: 28px; height: 28px; padding: 0; font-size: 16px; }
-    .close:hover { background: rgba(120, 120, 128, 0.25); }
 
     .user-bar { display: flex; align-items: center; gap: 12px; font-size: 14px; position: relative; }
     .user-info-box { display: flex; flex-direction: column; align-items: flex-end; }
@@ -359,10 +294,33 @@
     .msg-box.success-msg { background: rgba(52, 199, 89, 0.15); color: var(--green); display: block; }
     .msg-box.error-msg { background: rgba(255, 59, 48, 0.15); color: var(--red); display: block; }
 
-    @media(max-width: 950px) {
-      .grid { grid-template-columns: repeat(2, 1fr) !important; }
-      .layout { grid-template-columns: 1fr !important; }
-      .top { align-items: flex-start; flex-direction: column; }
+    .members-checklist { max-height: 140px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: #fafafa; margin-top: 6px; }
+    .members-checklist label { margin: 4px 0; font-weight: normal; color: var(--text); display: flex; align-items: center; gap: 8px; cursor: pointer; }
+
+    .type-switcher { display: flex; gap: 10px; margin-bottom: 12px; background: #eee; padding: 4px; border-radius: 10px; }
+    .type-switcher label { flex: 1; text-align: center; margin: 0; padding: 6px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
+    .type-switcher input { display: none; }
+    .type-switcher input:checked + span { color: var(--text); font-weight: 700; }
+    .type-switcher label:has(input:checked) { background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+    @media(max-width: 768px) {
+      .wrap { padding: 16px 12px 40px; }
+      .grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+      .card { padding: 14px; }
+      .metric { font-size: 20px; }
+      .layout { grid-template-columns: 1fr !important; gap: 16px; }
+      .top { align-items: stretch; flex-direction: column-reverse; gap: 12px; }
+      .user-bar { justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+      .user-info-box { align-items: flex-start; }
+      .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .toolbar button { width: 100%; }
+      .toolbar button:first-child { grid-column: span 2; }
+      th, td { padding: 10px 8px; font-size: 13px; }
+      .row { grid-template-columns: 1fr; gap: 0; }
+      .selection-actions-bar { flex-direction: column; gap: 10px; align-items: stretch; text-align: center; }
+      .selection-actions-bar button { width: 100%; }
+      .modal { padding: 10px; }
+      .modal-card { padding: 18px; border-radius: 14px; max-height: 90vh; }
     }
   </style>
 </head>
@@ -429,20 +387,16 @@
 
   <div class="toolbar">
     <button id="addExpenseBtn" onclick="openModal('expenseModal')">＋ Nieuwe kost</button>
+    <button id="addAccountBtn" class="secondary" style="display: none;" onclick="openModal('accountModal')">＋ Nieuwe rekening / persoon</button>
     <button class="secondary" onclick="openModal('historyModal');renderHistory()">Historiek</button>
   </div>
 
   <div class="layout" id="mainLayout">
-    <div class="card" id="peopleCard">
+    <div class="card" id="accountsCard">
       <div class="section-title">
-        <h2>Personen</h2>
-        <span class="pill">Klik om te filteren</span>
+        <h2>Rekeningen</h2>
       </div>
-      <form id="personForm" class="row" style="margin-bottom: 12px;">
-        <input id="personName" required placeholder="Naam">
-        <button type="submit">Toevoegen</button>
-      </form>
-      <div id="people" class="people-container"></div>
+      <div id="accounts" class="accounts-container"></div>
     </div>
 
     <div class="card expenses-card">
@@ -463,6 +417,46 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Modal: Nieuwe Rekening / Persoon -->
+<div id="accountModal" class="modal" onclick="if(event.target===this)closeModal('accountModal')">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><h2 id="accountModalTitle">Nieuwe Rekening / Persoon</h2><button class="close" onclick="closeModal('accountModal')">×</button></div>
+    
+    <div class="type-switcher">
+      <label>
+        <input type="radio" name="accountTypeToggle" value="shared" checked onchange="toggleAccountTypeUI()">
+        <span>Gezamenlijk</span>
+      </label>
+      <label>
+        <input type="radio" name="accountTypeToggle" value="personal" onchange="toggleAccountTypeUI()">
+        <span>Persoon</span>
+      </label>
+    </div>
+
+    <form id="accountForm">
+      <div id="fieldAccountName">
+        <label for="accountName">Rekeningnaam</label>
+        <input id="accountName" placeholder="Bijv. Gezamenlijk, Vakantie">
+      </div>
+
+      <div id="fieldPersonEmail" style="display:none;">
+        <label for="personName">Naam persoon</label>
+        <input id="personName" placeholder="Bijv. Jan Janssens">
+        
+        <label for="personEmail">E-mailadres (optioneel)</label>
+        <input id="personEmail" type="email" placeholder="jan@voorbeeld.be (mag leeg blijven)">
+      </div>
+      
+      <div id="fieldMembersChecklist">
+        <label for="accountMembersChecklist">Leden koppelen</label>
+        <div id="accountMembersChecklist" class="members-checklist"></div>
+      </div>
+      
+      <button class="full" type="submit">Opslaan</button>
+    </form>
   </div>
 </div>
 
@@ -530,7 +524,7 @@
 
       <div id="splitSection" style="display:none; margin-top:12px; padding:12px; background:#f7f7fa; border-radius:12px; border:1px solid var(--line);">
         <label style="margin:0 0 8px 0; font-weight:600; color:var(--text);">Splitsing aanpassen</label>
-        <div class="muted" style="font-size:12px; margin-bottom:10px;">Vink meerdere personen aan om de kost te verdelen. Standaard staat de geselecteerde persoon op 100%.</div>
+        <div class="muted" style="font-size:12px; margin-bottom:10px;">Vink rekeningen/personen aan om te verdelen. Standaard staat alles gelijk verdeeld.</div>
         <div id="splitPeople"></div>
         <div id="splitTotal" class="msg-box" style="display:block; margin-top:8px;">Verdeling: 100%</div>
       </div>
@@ -553,7 +547,7 @@ const SUPABASE_URL = "https://spkbprqsclypdidoadrm.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_N0qp_InFiqyV8ycP61aVBQ_nasLzXBA";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let data = { people: [], peopleObjects: [], expenses: [] };
+let data = { people: [], peopleObjects: [], accounts: [], expenses: [] };
 let selectedPerson = null;
 let currentUserName = "";
 let currentUserEmail = "";
@@ -565,19 +559,18 @@ let activeTab = 'open';
 let selectedExpenses = new Set();
 let isInitialLoad = true;
 
+// Sortering variabelen: Standaard op recentste datum (desc)
+let sortField = 'date'; 
+let sortOrder = 'desc'; 
+
 const euro = n => new Intl.NumberFormat("nl-BE", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
 const today = () => new Date().toISOString().slice(0, 10);
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c])) }
 
 document.getElementById("date").value = today();
 
-function showLoading() {
-  document.getElementById("loadingScreen").style.display = "flex";
-}
-
-function hideLoading() {
-  document.getElementById("loadingScreen").style.display = "none";
-}
+function showLoading() { document.getElementById("loadingScreen").style.display = "flex"; }
+function hideLoading() { document.getElementById("loadingScreen").style.display = "none"; }
 
 function toggleDropdown(e) {
   e.stopPropagation();
@@ -591,10 +584,7 @@ document.addEventListener("click", () => {
 
 function showAuthMsg(text, isError = false) {
   const box = document.getElementById("authStatusMsg");
-  if (!text) {
-    box.style.display = "none";
-    return;
-  }
+  if (!text) { box.style.display = "none"; return; }
   box.textContent = text;
   box.className = `msg-box ${isError ? 'error-msg' : 'success-msg'}`;
 }
@@ -769,16 +759,15 @@ async function fetchUserRole(user) {
 }
 
 function applyRolePermissions() {
-  const isAdmin = userRole === 'admin';
-  const peopleCard = document.getElementById("peopleCard");
+  const accountsCard = document.getElementById("accountsCard");
   const mainLayout = document.getElementById("mainLayout");
+  const addAccountBtn = document.getElementById("addAccountBtn");
 
-  if (!isAdmin) {
-    if (peopleCard) peopleCard.style.display = "none";
-    if (mainLayout) mainLayout.style.gridTemplateColumns = "1fr";
-  } else {
-    if (peopleCard) peopleCard.style.display = "block";
-    if (mainLayout) mainLayout.style.gridTemplateColumns = "320px 1fr";
+  if (accountsCard) accountsCard.style.display = "block";
+  if (mainLayout && window.innerWidth > 768) mainLayout.style.gridTemplateColumns = "340px 1fr";
+  
+  if (addAccountBtn) {
+    addAccountBtn.style.display = (userRole === 'admin') ? 'inline-flex' : 'none';
   }
 }
 
@@ -800,15 +789,15 @@ function calculateMonthBalance(targetPerson, monthKey) {
 }
 
 function updateHeaderUserDisplay() {
-  const isAdmin = userRole === 'admin';
-  const activeName = (isAdmin && selectedPerson) ? selectedPerson : currentUserName;
+  const activeName = selectedPerson ? selectedPerson : currentUserName;
   
   const personObj = data.peopleObjects.find(p => p.name === activeName);
   const activeAvatar = (personObj && personObj.avatar_url) 
     ? personObj.avatar_url 
     : (activeName === currentUserName ? avatarUrl : "");
 
-  document.getElementById("userNameDisplay").textContent = activeName;
+  const isAdmin = personObj ? personObj.role === 'admin' : (userRole === 'admin');
+  document.getElementById("userNameDisplay").textContent = activeName + (isAdmin ? ' ⭐' : '');
 
   const btn = document.getElementById("avatarBtn");
   const initials = document.getElementById("avatarInitials");
@@ -842,13 +831,15 @@ async function loadData(isInitial = false) {
   if (isInitial) showLoading();
   try {
     const { data: peopleData } = await supabaseClient.from('people').select('*').order('name');
+    const { data: accountsData } = await supabaseClient.from('accounts').select('*');
     const { data: expensesData } = await supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
 
     data.peopleObjects = peopleData || [];
     data.people = data.peopleObjects.map(p => p.name);
+    data.accounts = accountsData || [];
     data.expenses = expensesData || [];
 
-    if (userRole === 'admin' && !selectedPerson) {
+    if (!selectedPerson) {
       selectedPerson = currentUserName;
     }
 
@@ -858,24 +849,62 @@ async function loadData(isInitial = false) {
   }
 }
 
-function renderPeople() {
-  const container = document.getElementById("people");
+function renderAccounts() {
+  const container = document.getElementById("accounts");
+  const checklist = document.getElementById("accountMembersChecklist");
   if (!container) return;
 
-  if (!data.peopleObjects || data.peopleObjects.length === 0) {
-    container.innerHTML = `<div class="empty">Geen personen gevonden.</div>`;
+  if (checklist) {
+    checklist.innerHTML = data.peopleObjects.map(p => `
+      <label>
+        <input type="checkbox" name="accountMembers" value="${esc(p.name)}" ${p.name === currentUserName ? 'checked' : ''}>
+        ${esc(p.name)} ${p.role === 'admin' ? '⭐' : ''}
+      </label>
+    `).join('');
+  }
+
+  let allAccounts = data.peopleObjects.map(p => ({
+    name: p.name,
+    isShared: false,
+    members: [p.name],
+    isAdmin: p.role === 'admin'
+  }));
+
+  data.accounts.forEach(acc => {
+    allAccounts.push({
+      name: acc.name,
+      isShared: true,
+      members: acc.members || [],
+      isAdmin: false
+    });
+  });
+
+  const isAdmin = userRole === 'admin';
+  const visibleAccounts = allAccounts.filter(acc => {
+    if (isAdmin) return true;
+    return acc.members.includes(currentUserName);
+  });
+
+  if (visibleAccounts.length === 0) {
+    container.innerHTML = `<div class="empty">Geen rekeningen gevonden.</div>`;
     return;
   }
 
-  container.innerHTML = data.peopleObjects.map(p => {
-    const isSelected = selectedPerson === p.name;
+  container.innerHTML = visibleAccounts.map(acc => {
+    const isSelected = selectedPerson === acc.name;
+    const nameWithStar = acc.name + (acc.isAdmin ? ' ⭐' : '');
+    
+    const badgeHtml = acc.isShared 
+      ? `<span class="pill shared">Gezamenlijk (${acc.members.length})</span>` 
+      : `<span class="pill">Persoonlijk</span>`;
+    
     return `
       <div 
-        onclick="selectPerson('${esc(p.name)}')" 
+        onclick="selectPerson('${esc(acc.name)}')" 
         style="padding: 10px 12px; margin-bottom: 6px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: ${isSelected ? 'rgba(0,122,255,0.1)' : 'var(--card-solid)'}; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--line)'};"
       >
-        <span style="font-weight: 600;">${esc(p.name)}</span>
-        <span class="pill">${esc(p.role || 'user')}</span>
+        <span style="font-weight: 600;">${esc(nameWithStar)}</span>
+        ${badgeHtml}
       </div>
     `;
   }).join('');
@@ -898,7 +927,7 @@ function render() {
   let inProcessing = 0;
   let openCount = 0;
 
-  const targetPerson = (userRole === 'admin' && selectedPerson) ? selectedPerson : currentUserName;
+  const targetPerson = selectedPerson ? selectedPerson : currentUserName;
 
   data.expenses.forEach(e => {
     (e.splits || []).forEach(s => {
@@ -935,33 +964,86 @@ function render() {
   payer.disabled = true;
 
   const recipientSelect = document.getElementById("recipient");
-  const otherPeople = data.people.filter(p => p !== currentUserName);
-  recipientSelect.innerHTML = otherPeople.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  
+  let recipientOptionsHtml = '<optgroup label="Persoonlijke Rekeningen">';
+  data.people.filter(p => p !== currentUserName).forEach(p => {
+    recipientOptionsHtml += `<option value="${esc(p)}">${esc(p)}</option>`;
+  });
+  recipientOptionsHtml += '</optgroup>';
+
+  if (data.accounts.length > 0) {
+    recipientOptionsHtml += '<optgroup label="Gezamenlijke Rekeningen">';
+    data.accounts.forEach(acc => {
+      if (acc.name !== currentUserName) {
+        recipientOptionsHtml += `<option value="${esc(acc.name)}">${esc(acc.name)}</option>`;
+      }
+    });
+    recipientOptionsHtml += '</optgroup>';
+  }
+
+  recipientSelect.innerHTML = recipientOptionsHtml;
 
   updateHeaderUserDisplay();
-  renderPeople();
+  renderAccounts();
+  renderExpenses();
+}
+
+// 3-staps cyclus logica op de kolommen
+function handleHeaderClick(clickedField) {
+  if (sortField !== clickedField) {
+    sortField = clickedField;
+    sortOrder = 'asc';
+  } else if (sortOrder === 'asc') {
+    sortOrder = 'desc';
+  } else {
+    // Reset naar recentste datum
+    sortField = 'date';
+    sortOrder = 'desc';
+  }
   renderExpenses();
 }
 
 function getFilteredRows() {
   let rows = [];
-  const targetPerson = (userRole === 'admin' && selectedPerson) ? selectedPerson : currentUserName;
+  const targetPerson = selectedPerson ? selectedPerson : currentUserName;
 
   data.expenses.forEach((e, ei) => {
     (e.splits || []).forEach((s, si) => {
       if (s.status !== "paid") {
         if (activeTab === 'open') {
           if (s.person === targetPerson && e.payer !== targetPerson) {
-            rows.push({ e, s, ei, si });
+            rows.push({ e, s, ei, si, displayPerson: e.payer });
           }
         } else if (activeTab === 'outgoing') {
           if (e.payer === targetPerson && s.person !== targetPerson) {
-            rows.push({ e, s, ei, si });
+            rows.push({ e, s, ei, si, displayPerson: s.person });
           }
         }
       }
     });
   });
+
+  rows.sort((a, b) => {
+    let valA, valB;
+    if (sortField === 'description') {
+      valA = a.e.description.toLowerCase();
+      valB = b.e.description.toLowerCase();
+    } else if (sortField === 'amount') {
+      valA = Number(a.s.amount);
+      valB = Number(b.s.amount);
+    } else if (sortField === 'person') {
+      valA = a.displayPerson.toLowerCase();
+      valB = b.displayPerson.toLowerCase();
+    } else { // 'date'
+      valA = a.e.date || '';
+      valB = b.e.date || '';
+    }
+
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   return rows;
 }
 
@@ -971,46 +1053,179 @@ function toggleSelection(key) {
   renderExpenses();
 }
 
+function selectAllTotalExpenses() {
+  const rows = getFilteredRows();
+  rows.forEach(({ei, si}) => selectedExpenses.add(`${ei}-${si}`));
+  renderExpenses();
+}
+
+function clearAllSelections() {
+  selectedExpenses.clear();
+  renderExpenses();
+}
+
 function renderExpenses() {
-  const rows=getFilteredRows();
-  const totalPages=Math.ceil(rows.length/itemsPerPage)||1;
-  if(currentPage>totalPages) currentPage=totalPages;
-  const start=(currentPage-1)*itemsPerPage;
-  const paginatedRows=rows.slice(start,start+itemsPerPage);
-  document.getElementById("pageInfo").textContent=`Pagina ${currentPage} van ${totalPages}`;
-  document.getElementById("prevPage").disabled=currentPage<=1;
-  document.getElementById("nextPage").disabled=currentPage>=totalPages;
-  if(!rows.length){document.getElementById("expenses").innerHTML=`<div class="empty">Geen kosten gevonden voor dit tabblad.</div>`;selectedExpenses.clear();return;}
-  const visibleKeys=paginatedRows.map(({ei,si})=>`${ei}-${si}`);
-  const allVisibleSelected=visibleKeys.length>0&&visibleKeys.every(k=>selectedExpenses.has(k));
-  let html=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:#fafafa;">
-    <button class="secondary small" onclick="toggleSelectAllVisible()">${allVisibleSelected?'Deselecteer alles':'Alles selecteren'}</button>
-    <span class="muted" style="font-size:12px;">${selectedExpenses.size?`${selectedExpenses.size} geselecteerd`:'Klik op een kost om te selecteren'}</span>
-  </div><table><thead><tr><th class="checkbox-cell"></th><th>Omschrijving</th><th>Bedrag</th><th>Door / Voor</th><th>Status</th></tr></thead><tbody>`;
-  html+=paginatedRows.map(({e,s,ei,si})=>{
-    const key=`${ei}-${si}`,checked=selectedExpenses.has(key),pending=s.status==='pending_confirmation';
-    const badge=pending?`<span class="status-badge pending">In verwerking</span>`:`<span class="status-badge open">Openstaand</span>`;
-    return `<tr onclick="toggleSelection('${key}')" style="cursor:pointer;${checked?'background:rgba(0,122,255,.06);':''}">
-      <td class="checkbox-cell"><input type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();toggleSelection('${key}')"></td>
-      <td><b>${esc(e.description)}</b><div class="muted" style="font-size:11px;margin-top:2px;">${esc(e.date||'')}</div></td>
-      <td>${euro(s.amount)}</td><td><span class="muted" style="font-size:12px">${esc(e.payer)} ➔ ${esc(s.person)}</span></td><td>${badge}</td>
-    </tr>`;
-  }).join('');
-  html+=`</tbody></table>`;
-  if(selectedExpenses.size){
-    const selectedRows=rows.filter(({ei,si})=>selectedExpenses.has(`${ei}-${si}`));
-    const total=selectedRows.reduce((n,{s})=>n+Number(s.amount),0);
-    const outgoing=activeTab==='outgoing';
-    html+=`<div class="group-actions-bar"><span class="muted" style="font-size:13px"><b>${selectedExpenses.size}</b> geselecteerd · <b>${euro(total)}</b></span><button class="small ${outgoing?'success':''}" onclick="processGroupAction('${outgoing?'confirm':'pay'}')">${outgoing?'✓ Ontvangst bevestigen':'Markeer als betaald'}</button></div>`;
+  const rows = getFilteredRows();
+  const totalPages = Math.ceil(rows.length / itemsPerPage) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * itemsPerPage;
+  const paginatedRows = rows.slice(start, start + itemsPerPage);
+  
+  document.getElementById("pageInfo").textContent = `Pagina ${currentPage} van ${totalPages}`;
+  document.getElementById("prevPage").disabled = currentPage <= 1;
+  document.getElementById("nextPage").disabled = currentPage >= totalPages;
+  
+  if (!rows.length) {
+    document.getElementById("expenses").innerHTML = `<div class="empty">Geen kosten gevonden voor dit tabblad.</div>`;
+    selectedExpenses.clear();
+    return;
   }
-  document.getElementById("expenses").innerHTML=html;
+  
+  const visibleKeys = paginatedRows.map(({ei, si}) => `${ei}-${si}`);
+  const allVisibleSelected = visibleKeys.length > 0 && visibleKeys.every(k => selectedExpenses.has(k));
+  
+  const personHeaderLabel = activeTab === 'open' ? 'Door' : 'Voor';
+  
+  const getSortIcon = (field) => {
+    if (sortField !== field) return '';
+    return sortOrder === 'asc' ? ' ▲' : ' ▼';
+  };
+
+  let html = '';
+
+  html += `
+    <table>
+      <thead>
+        <tr>
+          <th class="checkbox-cell">
+            <input type="checkbox" ${allVisibleSelected ? 'checked' : ''} onclick="toggleSelectAllVisible()">
+          </th>
+          <th class="sortable" onclick="handleHeaderClick('description')">Omschrijving${getSortIcon('description')}</th>
+          <th class="sortable" onclick="handleHeaderClick('amount')">Bedrag${getSortIcon('amount')}</th>
+          <th class="sortable" onclick="handleHeaderClick('person')">${personHeaderLabel}${getSortIcon('person')}</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>`;
+  
+  html += paginatedRows.map(({e, s, ei, si, displayPerson}) => {
+    const key = `${ei}-${si}`;
+    const checked = selectedExpenses.has(key);
+    const pending = s.status === 'pending_confirmation';
+    const badge = pending ? `<span class="status-badge pending">In verwerking</span>` : `<span class="status-badge open">Openstaand</span>`;
+    
+    return `
+      <tr onclick="toggleSelection('${key}')" style="cursor:pointer;${checked ? 'background:rgba(0,122,255,.06);' : ''}">
+        <td class="checkbox-cell"><input type="checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation();toggleSelection('${key}')"></td>
+        <td>
+          <b>${esc(e.description)}</b>
+          <div class="muted" style="font-size:11px; margin-top:2px;">${esc(e.date || '')}</div>
+        </td>
+        <td>${euro(s.amount)}</td>
+        <td><span class="muted" style="font-size:13px; font-weight: 500;">${esc(displayPerson)}</span></td>
+        <td>${badge}</td>
+      </tr>`;
+  }).join('');
+  
+  html += `</tbody></table>`;
+
+  const allTotalSelected = rows.length > 0 && rows.every(({ei, si}) => selectedExpenses.has(`${ei}-${si}`));
+
+  if (selectedExpenses.size) {
+    const selectedRows = rows.filter(({ei, si}) => selectedExpenses.has(`${ei}-${si}`));
+    const total = selectedRows.reduce((n, {s}) => n + Number(s.amount), 0);
+    const outgoing = activeTab === 'outgoing';
+    const canDeleteAny = outgoing && selectedRows.some(({s}) => s.status === 'open');
+
+    html += `
+      <div class="selection-actions-bar">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span class="muted" style="font-size:13px"><b>${selectedExpenses.size}</b> van <b>${rows.length}</b> geselecteerd · <b>${euro(total)}</b></span>
+          ${!allTotalSelected ? `<button class="small secondary" onclick="selectAllTotalExpenses()">Selecteer alle ${rows.length} kosten</button>` : ''}
+          <button class="small secondary" onclick="clearAllSelections()">Deselecteer alles</button>
+        </div>
+        <div style="display:flex; gap:8px;">
+          ${canDeleteAny ? `<button class="small danger" onclick="deleteSelectedExpenses()">🗑️ Verwijderen</button>` : ''}
+          <button class="small ${outgoing ? 'success' : ''}" onclick="processGroupAction('${outgoing ? 'confirm' : 'pay'}')">
+            ${outgoing ? '✓ Ontvangst bevestigen' : 'Markeer als betaald'}
+          </button>
+        </div>
+      </div>`;
+  } else {
+    html += `
+      <div class="selection-actions-bar" style="justify-content: flex-start;">
+        <button class="small secondary" onclick="selectAllTotalExpenses()">☑ Selecteer alle ${rows.length} kosten (alle pagina's)</button>
+      </div>`;
+  }
+  
+  document.getElementById("expenses").innerHTML = html;
 }
 
 function toggleSelectAllVisible(){
-  const rows=getFilteredRows(),start=(currentPage-1)*itemsPerPage,visible=rows.slice(start,start+itemsPerPage).map(({ei,si})=>`${ei}-${si}`);
-  const all=visible.length&&visible.every(k=>selectedExpenses.has(k));
-  visible.forEach(k=>all?selectedExpenses.delete(k):selectedExpenses.add(k));
+  const rows = getFilteredRows();
+  const start = (currentPage - 1) * itemsPerPage;
+  const visible = rows.slice(start, start + itemsPerPage).map(({ei, si}) => `${ei}-${si}`);
+  const all = visible.length && visible.every(k => selectedExpenses.has(k));
+  visible.forEach(k => all ? selectedExpenses.delete(k) : selectedExpenses.add(k));
   renderExpenses();
+}
+
+async function deleteSelectedExpenses() {
+  if (selectedExpenses.size === 0) return;
+  
+  const rows = getFilteredRows();
+  const selectedRows = rows.filter(({ei, si}) => selectedExpenses.has(`${ei}-${si}`));
+  const deletableRows = selectedRows.filter(({s}) => s.status === 'open');
+  
+  if (deletableRows.length === 0) {
+    alert("Enkel kosten met de status 'Openstaand' kunnen worden verwijderd.");
+    return;
+  }
+
+  if (!confirm(`Weet je zeker dat je ${deletableRows.length} kost(en) wilt verwijderen?`)) {
+    return;
+  }
+
+  showLoading();
+
+  try {
+    let updates = {};
+
+    deletableRows.forEach(({e, ei, si}) => {
+      if (!updates[e.id]) {
+        updates[e.id] = { expense: e, remainingSplits: [...e.splits], indicesToRemove: [] };
+      }
+      updates[e.id].indicesToRemove.push(si);
+    });
+
+    for (const id in updates) {
+      const { expense, remainingSplits, indicesToRemove } = updates[id];
+      
+      indicesToRemove.sort((a, b) => b - a).forEach(index => {
+        remainingSplits.splice(index, 1);
+      });
+
+      if (remainingSplits.length === 0) {
+        await supabaseClient.from('expenses').delete().eq('id', id);
+      } else {
+        const newTotalAmount = remainingSplits.reduce((sum, s) => sum + Number(s.amount), 0);
+        const allPaid = remainingSplits.every(s => s.status === "paid");
+        
+        await supabaseClient.from('expenses').update({ 
+          splits: remainingSplits, 
+          amount: newTotalAmount,
+          status: allPaid ? "paid" : "open"
+        }).eq('id', id);
+      }
+    }
+
+    selectedExpenses.clear();
+    await loadData(false);
+  } catch (err) {
+    alert("Fout bij verwijderen: " + err.message);
+  } finally {
+    hideLoading();
+  }
 }
 
 async function processGroupAction(actionType) {
@@ -1054,7 +1269,7 @@ async function processGroupAction(actionType) {
 }
 
 function renderHistory() {
-  const targetPerson = (userRole === 'admin' && selectedPerson) ? selectedPerson : currentUserName;
+  const targetPerson = selectedPerson ? selectedPerson : currentUserName;
   
   const now = new Date();
   const currentMonthKey = now.toISOString().slice(0, 7);
@@ -1212,12 +1427,23 @@ function renderHistory() {
   document.getElementById("history").innerHTML = html;
 }
 
+function toggleAccountTypeUI() {
+  const isPersonal = document.querySelector('input[name="accountTypeToggle"]:checked').value === 'personal';
+  document.getElementById('fieldAccountName').style.display = isPersonal ? 'none' : 'block';
+  document.getElementById('fieldMembersChecklist').style.display = isPersonal ? 'none' : 'block';
+  document.getElementById('fieldPersonEmail').style.display = isPersonal ? 'block' : 'none';
+}
+
 function openModal(id) { 
   document.getElementById(id).classList.add("open"); 
   if(id === 'settingsModal') {
     const box = document.getElementById("settingsStatusMsg");
     box.className = "msg-box";
     box.style.display = "none";
+  }
+  if(id === 'accountModal') {
+    document.querySelector('input[name="accountTypeToggle"][value="shared"]').checked = true;
+    toggleAccountTypeUI();
   }
   if(id === 'expenseModal') {
     const payerSelect = document.getElementById("payer");
@@ -1261,23 +1487,36 @@ function toggleSplitSection() {
 
 function renderSplitPeople() {
   const box = document.getElementById('splitPeople');
-  const recipient = document.getElementById('recipient').value;
-  const people = data.people.filter(p => p !== currentUserName);
-  
-  if (!people.length) {
-    box.innerHTML = '<div class="muted">Voeg eerst een andere persoon toe om kosten aan toe te wijzen.</div>';
+  const selectedRecipient = document.getElementById('recipient').value;
+
+  let allTargets = [];
+
+  data.people.filter(p => p !== currentUserName).forEach(p => {
+    allTargets.push({ name: p, type: 'Persoon' });
+  });
+
+  data.accounts.forEach(acc => {
+    if (acc.name !== currentUserName) {
+      allTargets.push({ name: acc.name, type: 'Gezamenlijk' });
+    }
+  });
+
+  if (!allTargets.length) {
+    box.innerHTML = '<div class="muted">Geen andere rekeningen of personen beschikbaar om te verdelen.</div>';
     return;
   }
 
-  box.innerHTML = people.map(p => {
-    const isChecked = p === recipient;
+  box.innerHTML = allTargets.map(target => {
+    const isChecked = (target.name === selectedRecipient);
     const initialRatio = isChecked ? 100 : 0;
+    
     return `
       <div style="display:grid; grid-template-columns:1fr 90px 18px; gap:8px; align-items:center; margin:6px 0">
         <label style="margin:0; font-weight:500; cursor:pointer;">
-          <input type="checkbox" class="split-check" data-person="${esc(p)}" ${isChecked ? 'checked' : ''} onchange="rebalanceSplitPercentages()"> ${esc(p)}
+          <input type="checkbox" class="split-check" data-person="${esc(target.name)}" ${isChecked ? 'checked' : ''} onchange="rebalanceSplitPercentages()"> 
+          ${esc(target.name)} <small class="muted">(${target.type})</small>
         </label>
-        <input class="split-ratio" data-person="${esc(p)}" type="number" min="0" step="0.01" value="${initialRatio}" oninput="updateSplitTotal()">
+        <input class="split-ratio" data-person="${esc(target.name)}" type="number" min="0" step="0.01" value="${initialRatio}" oninput="updateSplitTotal()">
         <span>%</span>
       </div>
     `;
@@ -1321,14 +1560,14 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
   const chosen = rows.filter(r => r.querySelector('.split-check').checked);
 
   if (!chosen.length) {
-    alert("Selecteer a.u.b. ten minste 1 persoon voor wie deze kost is.");
+    alert("Selecteer a.u.b. ten minste 1 persoon of rekening waar deze kost voor is.");
     return;
   }
 
   const totalRatio = chosen.reduce((n, r) => n + (Number(r.querySelector('.split-ratio').value) || 0), 0);
 
   if (Math.abs(totalRatio - 100) > 0.01) {
-    alert("Zorg ervoor dat het totale percentage van de aangeduide personen exact 100% is.");
+    alert("Zorg ervoor dat het totale percentage exact 100% is.");
     return;
   }
 
@@ -1360,14 +1599,45 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
   await loadData(false);
 });
 
-document.getElementById("personForm").addEventListener("submit", async e => {
+document.getElementById("accountForm").addEventListener("submit", async e => {
   e.preventDefault();
-  const nameInput = document.getElementById("personName");
-  const name = nameInput.value.trim();
-  if (!name) return;
+  if (userRole !== 'admin') {
+    alert("Enkel beheerders mogen dit aanpassen.");
+    return;
+  }
 
-  await supabaseClient.from('people').insert([{ name, role: 'user' }]);
-  nameInput.value = "";
+  const isPersonal = document.querySelector('input[name="accountTypeToggle"]:checked').value === 'personal';
+
+  if (isPersonal) {
+    const pName = document.getElementById("personName").value.trim();
+    let pEmail = document.getElementById("personEmail").value.trim();
+
+    if (!pName) {
+      alert("Vul a.u.b. een naam in.");
+      return;
+    }
+
+    if (!pEmail) {
+      const uniqueId = Math.random().toString(36).substring(2, 10);
+      pEmail = `geen-email-${uniqueId}@lokal.invalid`;
+    }
+
+    await supabaseClient.from('people').insert([{ name: pName, email: pEmail, role: 'user' }]);
+  } else {
+    const nameInput = document.getElementById("accountName");
+    const name = nameInput.value.trim();
+    if (!name) return;
+
+    const checkedMembers = [...document.querySelectorAll('input[name="accountMembers"]:checked')].map(el => el.value);
+
+    await supabaseClient.from('accounts').insert([{ 
+      name, 
+      members: checkedMembers 
+    }]);
+  }
+
+  document.getElementById("accountForm").reset();
+  closeModal("accountModal");
   await loadData(false);
 });
 
