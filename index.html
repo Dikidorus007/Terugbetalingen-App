@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Terugbetalingen</title>
   <link rel="icon" href="favicon.ico">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -21,9 +21,32 @@
       --red: #ff3b30;
       --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
       --radius: 14px;
+      --surface-subtle: #fafafa;
+      --control-bg: #eeeeef;
+      --card-border: rgba(255, 255, 255, 0.6);
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #000000;
+      --card: rgba(28, 28, 30, 0.88);
+      --card-solid: #1c1c1e;
+      --text: #f2f2f7;
+      --muted: #98989d;
+      --line: rgba(235, 235, 245, 0.18);
+      --primary: #0a84ff;
+      --primary-hover: #409cff;
+      --green: #30d158;
+      --orange: #ff9f0a;
+      --red: #ff453a;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      --surface-subtle: #2c2c2e;
+      --control-bg: #2c2c2e;
+      --card-border: rgba(235, 235, 245, 0.1);
     }
 
     * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
@@ -68,7 +91,7 @@
     .selection-actions-bar {
       margin-top: 12px;
       padding: 12px 14px;
-      background: #fafafa;
+      background: var(--surface-subtle);
       border: 1px solid var(--line);
       border-radius: 10px;
       display: flex;
@@ -78,47 +101,85 @@
       flex-wrap: wrap;
     }
 
-    .history-item-single {
-      padding: 12px 14px;
-      margin-bottom: 16px;
-      background: var(--card-solid);
-      border-radius: 12px;
-      border: 1px solid var(--line);
+    .history-section-label {
+      margin: 4px 0 8px;
+      padding: 0 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
     }
 
-    details.history-group {
+    .history-card, details.history-group {
+      margin: 0 0 12px;
+      overflow: hidden;
+      background: var(--card-solid);
+      border: 1px solid rgba(60, 60, 67, 0.12);
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .history-item-single { padding: 14px 16px 14px 42px; }
+
+    details.history-group summary {
       position: relative;
-      background: var(--card-solid);
-      border: 1px solid #d1d1d6;
-      border-radius: 12px;
-      margin-top: 10px;
-      margin-bottom: 24px;
-      padding: 12px 14px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      transition: all 0.25s ease;
+      padding: 14px 16px 14px 42px;
+      font-weight: normal;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
     }
 
-    details.history-group summary { font-weight: normal; cursor: pointer; list-style: none; user-select: none; }
     details.history-group summary::-webkit-details-marker { display: none; }
+    details.history-group summary::after {
+      content: "›";
+      position: absolute;
+      top: 50%;
+      left: 16px;
+      color: #c7c7cc;
+      font-size: 25px;
+      font-weight: 300;
+      line-height: 1;
+      transform: translateY(-52%);
+      transition: transform 0.2s ease;
+    }
+    details.history-group[open] summary::after { transform: translateY(-52%) rotate(90deg); }
+
+    .history-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .history-person { font-size: 16px; font-weight: 600; letter-spacing: -0.15px; }
+    .history-description { margin-top: 4px; color: var(--muted); font-size: 13px; }
+    .history-date { margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .history-amount { font-size: 16px; font-weight: 700; white-space: nowrap; letter-spacing: -0.2px; }
+    .history-amount.incoming { color: var(--green); }
+    .history-amount.outgoing { color: var(--red); }
 
     .history-group-items {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--line);
-      font-size: 13px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      margin: 0 16px 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      font-size: 13px;
     }
 
     .history-sub-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 10px;
-      background: rgba(0, 0, 0, 0.03);
-      border-radius: 8px;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--card-solid);
     }
+    .history-sub-item + .history-sub-item { border-top: 1px solid var(--line); }
+
+    .history-settlement { border-color: rgba(0, 122, 255, 0.28); }
+    .history-settlement summary { background: var(--card-solid); }
+    .history-settlement-title { color: var(--primary); font-size: 16px; font-weight: 700; }
 
     .auth-overlay {
       position: fixed;
@@ -153,7 +214,7 @@
       background: var(--card);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.6);
+      border: 1px solid var(--card-border);
       border-radius: var(--radius);
       padding: 20px;
       box-shadow: var(--shadow);
@@ -177,7 +238,10 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
+      touch-action: manipulation;
     }
+
+    button:not(.small):not(.close) { min-height: 44px; }
 
     button:hover { background: var(--primary-hover); }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -209,10 +273,12 @@
       font: inherit;
       color: var(--text);
       outline: none;
+      min-height: 44px;
+      font-size: 16px;
     }
 
     input:focus, select:focus { border-color: var(--primary); }
-    select:disabled { background: #f0f0f5; color: var(--muted); cursor: not-allowed; }
+    select:disabled { background: var(--surface-subtle); color: var(--muted); cursor: not-allowed; }
 
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .full { width: 100%; margin-top: 16px; }
@@ -227,9 +293,9 @@
       overflow-x: auto;
     }
 
-    table { width: 100%; border-collapse: collapse; }
+    table { width: 100%; min-width: 620px; border-collapse: collapse; }
     th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
-    th { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; background: #fafafa; user-select: none; }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; background: var(--surface-subtle); user-select: none; }
     th.sortable { cursor: pointer; }
     th.sortable:hover { color: var(--text); }
     tr:last-child td { border-bottom: 0; }
@@ -247,6 +313,20 @@
     .pill.shared { background: rgba(0, 122, 255, 0.15); color: var(--primary); }
 
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+
+    .app-message, .overdue-notice {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .app-message.error-msg { display: flex; background: rgba(255, 59, 48, 0.12); color: #b42318; }
+    .overdue-notice.visible { display: flex; background: rgba(255, 149, 0, 0.14); color: #8a4b00; }
+    .overdue-notice strong { color: #6e3c00; }
 
     .modal {
       position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4);
@@ -294,20 +374,21 @@
     .msg-box.success-msg { background: rgba(52, 199, 89, 0.15); color: var(--green); display: block; }
     .msg-box.error-msg { background: rgba(255, 59, 48, 0.15); color: var(--red); display: block; }
 
-    .members-checklist { max-height: 140px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: #fafafa; margin-top: 6px; }
+    .members-checklist { max-height: 140px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: var(--surface-subtle); margin-top: 6px; }
     .members-checklist label { margin: 4px 0; font-weight: normal; color: var(--text); display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
-    .type-switcher { display: flex; gap: 10px; margin-bottom: 12px; background: #eee; padding: 4px; border-radius: 10px; }
+    .type-switcher { display: flex; gap: 10px; margin-bottom: 12px; background: var(--control-bg); padding: 4px; border-radius: 10px; }
     .type-switcher label { flex: 1; text-align: center; margin: 0; padding: 6px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
     .type-switcher input { display: none; }
     .type-switcher input:checked + span { color: var(--text); font-weight: 700; }
-    .type-switcher label:has(input:checked) { background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .type-switcher label:has(input:checked) { background: var(--card-solid); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
 
     @media(max-width: 768px) {
-      .wrap { padding: 16px 12px 40px; }
+      .wrap { padding: max(16px, env(safe-area-inset-top)) 12px max(40px, env(safe-area-inset-bottom)); }
       .grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
-      .card { padding: 14px; }
-      .metric { font-size: 20px; }
+      .card { min-width: 0; padding: 14px; }
+      .metric { font-size: clamp(18px, 5.5vw, 23px); }
+      .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .layout { grid-template-columns: 1fr !important; gap: 16px; }
       .top { align-items: stretch; flex-direction: column-reverse; gap: 12px; }
       .user-bar { justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
@@ -315,12 +396,32 @@
       .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
       .toolbar button { width: 100%; }
       .toolbar button:first-child { grid-column: span 2; }
+      .tabs { gap: 0; overflow-x: auto; scrollbar-width: none; }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tab-btn { flex: 1 0 auto; min-height: 44px; padding: 10px 14px; }
+      .table-container { -webkit-overflow-scrolling: touch; }
       th, td { padding: 10px 8px; font-size: 13px; }
       .row { grid-template-columns: 1fr; gap: 0; }
       .selection-actions-bar { flex-direction: column; gap: 10px; align-items: stretch; text-align: center; }
       .selection-actions-bar button { width: 100%; }
+      .history-row { gap: 8px; }
+      .history-person, .history-settlement-title { font-size: 15px; }
+      .history-amount { font-size: 15px; }
       .modal { padding: 10px; }
       .modal-card { padding: 18px; border-radius: 14px; max-height: 90vh; }
+    }
+
+    @media(max-width: 480px) {
+      h1 { font-size: 27px; }
+      .sub { font-size: 14px; }
+      .grid { gap: 8px; }
+      .card { padding: 12px; }
+      .toolbar { grid-template-columns: 1fr; }
+      .toolbar button:first-child { grid-column: auto; }
+      .app-message, .overdue-notice { align-items: flex-start; }
+      .modal { align-items: flex-end; padding: 0; }
+      .modal-card { width: 100%; max-height: 88vh; padding: 20px 16px max(20px, env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
+      .close { min-height: 32px; }
     }
   </style>
 </head>
@@ -384,6 +485,9 @@
     <div class="card"><div class="label">In verwerking</div><div id="pendingMetric" class="metric warning">€0,00</div></div>
     <div class="card"><div class="label">Openstaande kosten</div><div id="open" class="metric">0</div></div>
   </div>
+
+  <div id="appStatusMsg" class="app-message" role="alert"></div>
+  <div id="overdueExpensesNotice" class="overdue-notice" role="status"></div>
 
   <div class="toolbar">
     <button id="addExpenseBtn" onclick="openModal('expenseModal')">＋ Nieuwe kost</button>
@@ -468,6 +572,18 @@
     <div id="settingsStatusMsg" class="msg-box"></div>
 
     <div class="settings-section" style="border-top:none; padding-top:0;">
+      <h3>Uiterlijk</h3>
+      <label for="themePreference">Kleurmodus</label>
+      <select id="themePreference" onchange="setThemePreference(this.value)">
+        <option value="system">Systeeminstelling</option>
+        <option value="light">Licht</option>
+        <option value="dark">Donker</option>
+      </select>
+      <div class="muted" style="font-size:12px; margin-top:7px;">Bij systeeminstelling volgt de app automatisch de lichte of donkere modus van je apparaat.</div>
+      <button class="full secondary" type="button" onclick="saveThemePreference()">Uiterlijk opslaan</button>
+    </div>
+
+    <div class="settings-section">
       <h3>Profiel</h3>
       <label for="displayNameInput">Weergavenaam</label>
       <input id="displayNameInput" placeholder="Jouw weergavenaam">
@@ -558,19 +674,99 @@ let userRole = 'user';
 let activeTab = 'open';
 let selectedExpenses = new Set();
 let isInitialLoad = true;
+let themePreference = "system";
+let expensesRealtimeChannel = null;
+let realtimeRefreshTimer = null;
 
 // Sortering variabelen: Standaard op recentste datum (desc)
 let sortField = 'date'; 
 let sortOrder = 'desc'; 
 
 const euro = n => new Intl.NumberFormat("nl-BE", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
-const today = () => new Date().toISOString().slice(0, 10);
+// Gebruik lokale datumdelen. toISOString() rekent in UTC en kan rond middernacht
+// een datum of maand te vroeg opleveren in de Belgische tijdzone.
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function localMonthKey(date = new Date()) {
+  return localDateKey(date).slice(0, 7);
+}
+
+function monthKeyFromStoredDate(dateValue) {
+  // Datums uit Supabase zijn normaal YYYY-MM-DD of ISO-timestamps. De eerste
+  // zeven tekens zijn in beide gevallen de maand waarin de betaling plaatsvond.
+  return typeof dateValue === "string" ? dateValue.slice(0, 7) : "";
+}
+
+const today = () => localDateKey();
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c])) }
+
+function setThemePreference(preference) {
+  themePreference = ["system", "light", "dark"].includes(preference) ? preference : "system";
+  const useDarkTheme = themePreference === "dark" || (themePreference === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = useDarkTheme ? "dark" : "light";
+
+  const selector = document.getElementById("themePreference");
+  if (selector) selector.value = themePreference;
+  try { localStorage.setItem("repayment-theme-preference", themePreference); } catch (_) { /* opslag kan geblokkeerd zijn */ }
+}
+
+async function saveThemePreference() {
+  try {
+    const { error } = await supabaseClient.auth.updateUser({ data: { theme_preference: themePreference } });
+    if (error) throw error;
+    showMsg("Uiterlijk succesvol opgeslagen!");
+  } catch (err) {
+    showMsg("Fout bij opslaan van het uiterlijk: " + err.message, true);
+  }
+}
+
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  if (themePreference === "system") setThemePreference("system");
+});
+
+try { setThemePreference(localStorage.getItem("repayment-theme-preference") || "system"); }
+catch (_) { setThemePreference("system"); }
 
 document.getElementById("date").value = today();
 
 function showLoading() { document.getElementById("loadingScreen").style.display = "flex"; }
 function hideLoading() { document.getElementById("loadingScreen").style.display = "none"; }
+
+function stopExpensesRealtime() {
+  if (realtimeRefreshTimer) {
+    clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = null;
+  }
+  if (expensesRealtimeChannel) {
+    supabaseClient.removeChannel(expensesRealtimeChannel);
+    expensesRealtimeChannel = null;
+  }
+}
+
+function scheduleRealtimeRefresh() {
+  // Groepeer snelle opeenvolgende wijzigingen tot één gegevensverversing.
+  clearTimeout(realtimeRefreshTimer);
+  realtimeRefreshTimer = setTimeout(() => loadData(false), 250);
+}
+
+function startExpensesRealtime() {
+  stopExpensesRealtime();
+  if (!currentUserEmail) return;
+
+  expensesRealtimeChannel = supabaseClient
+    .channel(`expenses-status-${currentUserEmail}`)
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "expenses" }, scheduleRealtimeRefresh)
+    .subscribe(status => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        console.warn("Realtime-updates voor kosten zijn tijdelijk niet beschikbaar.");
+      }
+    });
+}
 
 function toggleDropdown(e) {
   e.stopPropagation();
@@ -635,6 +831,7 @@ document.getElementById("authForm").addEventListener("submit", async (e) => {
 });
 
 async function handleLogout() {
+  stopExpensesRealtime();
   await supabaseClient.auth.signOut();
   selectedPerson = null;
   document.getElementById("appWrap").style.display = "none";
@@ -655,6 +852,53 @@ function showMsg(text, isError = false) {
   const box = document.getElementById("settingsStatusMsg");
   box.textContent = text;
   box.className = `msg-box ${isError ? 'error-msg' : 'success-msg'}`;
+}
+
+function showAppError(action, error) {
+  const box = document.getElementById("appStatusMsg");
+  const detail = error?.message || "Onbekende fout.";
+  box.textContent = `${action} is niet gelukt. ${detail}`;
+  box.className = "app-message error-msg";
+}
+
+function throwIfSupabaseError(result) {
+  if (result.error) throw result.error;
+  return result.data;
+}
+
+function renderOverdueExpensesNotice(targetPerson) {
+  const notice = document.getElementById("overdueExpensesNotice");
+  const currentMonth = localMonthKey();
+  let count = 0;
+  let toPay = 0;
+  let toReceive = 0;
+
+  data.expenses.forEach(e => {
+    if (monthKeyFromStoredDate(e.date) >= currentMonth) return;
+    (e.splits || []).forEach(s => {
+      if (s.status === "paid") return;
+      const amount = Number(s.amount) || 0;
+      if (s.person === targetPerson && e.payer !== targetPerson) {
+        count++;
+        toPay += amount;
+      } else if (e.payer === targetPerson && s.person !== targetPerson) {
+        count++;
+        toReceive += amount;
+      }
+    });
+  });
+
+  if (!count) {
+    notice.className = "overdue-notice";
+    notice.textContent = "";
+    return;
+  }
+
+  const parts = [];
+  if (toPay) parts.push(`${euro(toPay)} te betalen`);
+  if (toReceive) parts.push(`${euro(toReceive)} te ontvangen`);
+  notice.innerHTML = `<span aria-hidden="true">⏰</span><span><strong>${count} openstaande ${count === 1 ? 'kost' : 'kosten'} uit een vorige maand.</strong> ${parts.join(' · ')}</span>`;
+  notice.className = "overdue-notice visible";
 }
 
 async function saveProfileSettings() {
@@ -777,7 +1021,7 @@ function calculateMonthBalance(targetPerson, monthKey) {
     (e.splits || []).forEach(s => {
       if (s.status === "paid") {
         const dateStr = s.paidAt || e.date;
-        if (dateStr && dateStr.substring(0, 7) === monthKey) {
+        if (monthKeyFromStoredDate(dateStr) === monthKey) {
           const amt = Number(s.amount);
           if (e.payer === targetPerson) balance += amt;
           if (s.person === targetPerson) balance -= amt;
@@ -811,7 +1055,7 @@ function updateHeaderUserDisplay() {
   }
 
   const now = new Date();
-  const currentMonthKey = now.toISOString().slice(0, 7);
+  const currentMonthKey = localMonthKey(now);
   const balance = calculateMonthBalance(activeName, currentMonthKey);
   
   const monthNames = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
@@ -830,9 +1074,10 @@ function updateHeaderUserDisplay() {
 async function loadData(isInitial = false) {
   if (isInitial) showLoading();
   try {
-    const { data: peopleData } = await supabaseClient.from('people').select('*').order('name');
-    const { data: accountsData } = await supabaseClient.from('accounts').select('*');
-    const { data: expensesData } = await supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+    const { data: peopleData, error: peopleError } = await supabaseClient.from('people').select('*').order('name');
+    const { data: accountsData, error: accountsError } = await supabaseClient.from('accounts').select('*');
+    const { data: expensesData, error: expensesError } = await supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+    throwIfSupabaseError({ error: peopleError || accountsError || expensesError });
 
     data.peopleObjects = peopleData || [];
     data.people = data.peopleObjects.map(p => p.name);
@@ -844,6 +1089,9 @@ async function loadData(isInitial = false) {
     }
 
     render();
+  } catch (err) {
+    console.error("Fout bij laden van gegevens:", err);
+    if (!isInitial) showAppError("Laden van de gegevens", err);
   } finally {
     if (isInitial) hideLoading();
   }
@@ -984,6 +1232,7 @@ function render() {
   recipientSelect.innerHTML = recipientOptionsHtml;
 
   updateHeaderUserDisplay();
+  renderOverdueExpensesNotice(targetPerson);
   renderAccounts();
   renderExpenses();
 }
@@ -1206,23 +1455,23 @@ async function deleteSelectedExpenses() {
       });
 
       if (remainingSplits.length === 0) {
-        await supabaseClient.from('expenses').delete().eq('id', id);
+        throwIfSupabaseError(await supabaseClient.from('expenses').delete().eq('id', id));
       } else {
         const newTotalAmount = remainingSplits.reduce((sum, s) => sum + Number(s.amount), 0);
         const allPaid = remainingSplits.every(s => s.status === "paid");
         
-        await supabaseClient.from('expenses').update({ 
+        throwIfSupabaseError(await supabaseClient.from('expenses').update({ 
           splits: remainingSplits, 
           amount: newTotalAmount,
           status: allPaid ? "paid" : "open"
-        }).eq('id', id);
+        }).eq('id', id));
       }
     }
 
     selectedExpenses.clear();
     await loadData(false);
   } catch (err) {
-    alert("Fout bij verwijderen: " + err.message);
+    showAppError("Verwijderen van de kost", err);
   } finally {
     hideLoading();
   }
@@ -1255,13 +1504,19 @@ async function processGroupAction(actionType) {
     }
   });
   
-  for (const id in updates) {
-    if (updates[id].modified) {
-      const e = updates[id].expense;
-      const allPaid = e.splits.every(s => s.status === "paid");
-      const newStatus = allPaid ? "paid" : "open";
-      await supabaseClient.from('expenses').update({ splits: e.splits, status: newStatus }).eq('id', e.id);
+  try {
+    for (const id in updates) {
+      if (updates[id].modified) {
+        const e = updates[id].expense;
+        const allPaid = e.splits.every(s => s.status === "paid");
+        const newStatus = allPaid ? "paid" : "open";
+        throwIfSupabaseError(await supabaseClient.from('expenses').update({ splits: e.splits, status: newStatus }).eq('id', e.id));
+      }
     }
+  } catch (err) {
+    showAppError(actionType === 'pay' ? "Markeren als betaald" : "Bevestigen van de ontvangst", err);
+    await loadData(false);
+    return;
   }
   
   selectedExpenses.clear();
@@ -1272,9 +1527,9 @@ function renderHistory() {
   const targetPerson = selectedPerson ? selectedPerson : currentUserName;
   
   const now = new Date();
-  const currentMonthKey = now.toISOString().slice(0, 7);
+  const currentMonthKey = localMonthKey(now);
   const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const prevMonthKey = prevMonthDate.toISOString().slice(0, 7);
+  const prevMonthKey = localMonthKey(prevMonthDate);
 
   const monthNames = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"];
 
@@ -1286,7 +1541,7 @@ function renderHistory() {
       if (s.status === "paid") {
         if (e.payer === targetPerson || s.person === targetPerson) {
           const dateStr = s.paidAt || e.date;
-          const monthKey = dateStr ? dateStr.substring(0, 7) : "";
+          const monthKey = monthKeyFromStoredDate(dateStr);
           
           if (monthKey === currentMonthKey) {
             currentMonthPaidShares.push({ e, s });
@@ -1303,52 +1558,7 @@ function renderHistory() {
     return;
   }
 
-  let html = "";
-
-  if (prevMonthPaidShares.length) {
-    let prevMonthTotal = 0;
-    prevMonthPaidShares.forEach(item => {
-      const isIncoming = item.e.payer === targetPerson;
-      const amt = Number(item.s.amount);
-      prevMonthTotal += isIncoming ? amt : -amt;
-    });
-
-    const prevMonthName = `${monthNames[prevMonthDate.getMonth()]} ${prevMonthDate.getFullYear()}`;
-    const prevColor = prevMonthTotal >= 0 ? 'var(--green)' : 'var(--red)';
-    const prevPrefix = prevMonthTotal >= 0 ? '+' : '-';
-
-    html += `
-      <details class="history-group" style="border: 2px solid var(--primary);">
-        <summary>
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
-              <b style="font-size:15px; color:var(--primary);">📅 Saldo ${prevMonthName} (Afgelopen Maand)</b>
-              <div class="muted" style="font-size:11px; margin-top:2px;">Klik om alle kosten van deze maand te bekijken</div>
-            </div>
-            <span style="color:${prevColor}; font-weight:700; font-size:16px;">${prevPrefix}${euro(Math.abs(prevMonthTotal))}</span>
-          </div>
-        </summary>
-        <div class="history-group-items">
-          ${prevMonthPaidShares.map(({e, s}) => {
-            const isIncoming = e.payer === targetPerson;
-            const displayName = isIncoming ? s.person : e.payer;
-            const subColor = isIncoming ? 'var(--green)' : 'var(--red)';
-            const subPrefix = isIncoming ? '+' : '-';
-            return `
-              <div class="history-sub-item">
-                <div>
-                  <div><b>${esc(e.description)}</b> (${esc(displayName)})</div>
-                  <div class="muted" style="font-size:10px;">${s.paidAt || e.date}</div>
-                </div>
-                <span style="font-weight:600; color:${subColor};">${subPrefix}${euro(s.amount)}</span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </details>
-      <div style="margin: 16px 0 10px 0; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Lopende Maand (${monthNames[now.getMonth()]})</div>
-    `;
-  }
+  let html = `<div class="history-section-label">Lopende maand · ${monthNames[now.getMonth()]}</div>`;
 
   if (currentMonthPaidShares.length) {
     const grouped = {};
@@ -1369,49 +1579,46 @@ function renderHistory() {
         const { e, s } = group.items[0];
         const isIncoming = e.payer === targetPerson;
         const displayName = isIncoming ? s.person : e.payer;
-        const amountColor = isIncoming ? 'var(--green)' : 'var(--red)';
         const amountPrefix = isIncoming ? '+' : '-';
 
         return `
-          <div class="history-item-single">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div class="history-card history-item-single">
+            <div class="history-row">
               <div>
-                <div>${esc(displayName)}</div>
-                <div class="muted" style="font-size:11px; margin-top:2px;">${s.paidAt || e.date}</div>
+                <div class="history-person">${esc(displayName)}</div>
+                <div class="history-date">${s.paidAt || e.date}</div>
               </div>
-              <span style="color:${amountColor}; font-weight:600;">${amountPrefix}${euro(s.amount)}</span>
+              <span class="history-amount ${isIncoming ? 'incoming' : 'outgoing'}">${amountPrefix}${euro(s.amount)}</span>
             </div>
-            <div class="muted" style="font-size:13px; margin-top:4px;">${esc(e.description)}</div>
+            <div class="history-description">${esc(e.description)}</div>
           </div>
         `;
       } else {
         const firstItem = group.items[0];
         const isGroupIncoming = firstItem.e.payer === targetPerson;
         const groupDisplayName = isGroupIncoming ? firstItem.s.person : firstItem.e.payer;
-        const groupColor = group.total >= 0 ? 'var(--green)' : 'var(--red)';
         const groupPrefix = group.total >= 0 ? '+' : '-';
 
         return `
           <details class="history-group">
             <summary>
-              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div class="history-row">
                 <div>
-                  <div>${esc(groupDisplayName)}</div>
-                  <div class="muted" style="font-size:11px; margin-top:2px;">${group.date}</div>
+                  <div class="history-person">${esc(groupDisplayName)}</div>
+                  <div class="history-date">${group.date}</div>
                 </div>
-                <span style="color:${groupColor}; font-weight:600;">${groupPrefix}${euro(Math.abs(group.total))}</span>
+                <span class="history-amount ${group.total >= 0 ? 'incoming' : 'outgoing'}">${groupPrefix}${euro(Math.abs(group.total))}</span>
               </div>
-              <div class="muted" style="font-size:13px; margin-top:4px;">Meerdere items</div>
+              <div class="history-description">${group.items.length} betalingen</div>
             </summary>
             <div class="history-group-items">
               ${group.items.map(({e, s}) => {
                 const itemIncoming = e.payer === targetPerson;
-                const subColor = itemIncoming ? 'var(--green)' : 'var(--red)';
                 const subPrefix = itemIncoming ? '+' : '-';
                 return `
                   <div class="history-sub-item">
                     <span>${esc(e.description)}</span>
-                    <span style="font-weight:500; color:${subColor};">${subPrefix}${euro(s.amount)}</span>
+                    <span class="history-amount ${itemIncoming ? 'incoming' : 'outgoing'}" style="font-size:14px;">${subPrefix}${euro(s.amount)}</span>
                   </div>
                 `;
               }).join('')}
@@ -1422,6 +1629,44 @@ function renderHistory() {
     }).join("");
   } else {
     html += `<div class="empty">Nog geen betalingen in de huidige maand.</div>`;
+  }
+
+  if (prevMonthPaidShares.length) {
+    const prevMonthTotal = prevMonthPaidShares.reduce((total, { e, s }) => {
+      return total + (e.payer === targetPerson ? Number(s.amount) : -Number(s.amount));
+    }, 0);
+    const prevPrefix = prevMonthTotal >= 0 ? '+' : '-';
+
+    html += `
+      <div class="history-section-label" style="margin-top:20px;">Afrekening</div>
+      <details class="history-group history-settlement">
+        <summary>
+          <div class="history-row">
+            <div>
+              <div class="history-settlement-title">Saldo afgelopen maand</div>
+              <div class="history-date">Tik om de betalingen te bekijken</div>
+            </div>
+            <span class="history-amount ${prevMonthTotal >= 0 ? 'incoming' : 'outgoing'}">${prevPrefix}${euro(Math.abs(prevMonthTotal))}</span>
+          </div>
+        </summary>
+        <div class="history-group-items">
+          ${prevMonthPaidShares.map(({e, s}) => {
+            const isIncoming = e.payer === targetPerson;
+            const displayName = isIncoming ? s.person : e.payer;
+            const prefix = isIncoming ? '+' : '-';
+            return `
+              <div class="history-sub-item">
+                <div>
+                  <div><b>${esc(e.description)}</b> <span class="muted">· ${esc(displayName)}</span></div>
+                  <div class="history-date">${s.paidAt || e.date}</div>
+                </div>
+                <span class="history-amount ${isIncoming ? 'incoming' : 'outgoing'}" style="font-size:14px;">${prefix}${euro(s.amount)}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </details>
+    `;
   }
 
   document.getElementById("history").innerHTML = html;
@@ -1591,12 +1836,15 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
     status: "open"
   };
 
-  await supabaseClient.from('expenses').insert([newExpense]);
-  closeModal("expenseModal");
-  document.getElementById("expenseForm").reset();
-  document.getElementById("date").value = today();
-  
-  await loadData(false);
+  try {
+    throwIfSupabaseError(await supabaseClient.from('expenses').insert([newExpense]));
+    closeModal("expenseModal");
+    document.getElementById("expenseForm").reset();
+    document.getElementById("date").value = today();
+    await loadData(false);
+  } catch (err) {
+    showAppError("Opslaan van de kost", err);
+  }
 });
 
 document.getElementById("accountForm").addEventListener("submit", async e => {
@@ -1608,37 +1856,41 @@ document.getElementById("accountForm").addEventListener("submit", async e => {
 
   const isPersonal = document.querySelector('input[name="accountTypeToggle"]:checked').value === 'personal';
 
-  if (isPersonal) {
-    const pName = document.getElementById("personName").value.trim();
-    let pEmail = document.getElementById("personEmail").value.trim();
+  try {
+    if (isPersonal) {
+      const pName = document.getElementById("personName").value.trim();
+      let pEmail = document.getElementById("personEmail").value.trim();
 
-    if (!pName) {
-      alert("Vul a.u.b. een naam in.");
-      return;
+      if (!pName) {
+        alert("Vul a.u.b. een naam in.");
+        return;
+      }
+
+      if (!pEmail) {
+        const uniqueId = Math.random().toString(36).substring(2, 10);
+        pEmail = `geen-email-${uniqueId}@lokal.invalid`;
+      }
+
+      throwIfSupabaseError(await supabaseClient.from('people').insert([{ name: pName, email: pEmail, role: 'user' }]));
+    } else {
+      const nameInput = document.getElementById("accountName");
+      const name = nameInput.value.trim();
+      if (!name) return;
+
+      const checkedMembers = [...document.querySelectorAll('input[name="accountMembers"]:checked')].map(el => el.value);
+
+      throwIfSupabaseError(await supabaseClient.from('accounts').insert([{ 
+        name, 
+        members: checkedMembers 
+      }]));
     }
 
-    if (!pEmail) {
-      const uniqueId = Math.random().toString(36).substring(2, 10);
-      pEmail = `geen-email-${uniqueId}@lokal.invalid`;
-    }
-
-    await supabaseClient.from('people').insert([{ name: pName, email: pEmail, role: 'user' }]);
-  } else {
-    const nameInput = document.getElementById("accountName");
-    const name = nameInput.value.trim();
-    if (!name) return;
-
-    const checkedMembers = [...document.querySelectorAll('input[name="accountMembers"]:checked')].map(el => el.value);
-
-    await supabaseClient.from('accounts').insert([{ 
-      name, 
-      members: checkedMembers 
-    }]);
+    document.getElementById("accountForm").reset();
+    closeModal("accountModal");
+    await loadData(false);
+  } catch (err) {
+    showAppError("Opslaan van de rekening of persoon", err);
   }
-
-  document.getElementById("accountForm").reset();
-  closeModal("accountModal");
-  await loadData(false);
 });
 
 async function initSession(session) {
@@ -1653,6 +1905,7 @@ async function initSession(session) {
       currentUserEmail = session.user.email || "";
       const meta = session.user.user_metadata || {};
       currentUserName = meta.display_name || currentUserEmail.split('@')[0];
+      setThemePreference(meta.theme_preference || themePreference);
 
       const { data: personData } = await supabaseClient
         .from('people')
@@ -1672,8 +1925,10 @@ async function initSession(session) {
       
       await ensurePersonExists(currentUserName, currentUserEmail);
       await fetchUserRole(session.user);
+      startExpensesRealtime();
       await loadData(showLoader);
     } else {
+      stopExpensesRealtime();
       document.getElementById("appWrap").style.display = "none";
       document.getElementById("authScreen").style.display = "flex";
       hideLoading();
