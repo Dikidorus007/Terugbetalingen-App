@@ -4,7 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Terugbetalingen</title>
-  <link rel="icon" href="favicon.ico">
+  <link rel="icon" href="./favicon.ico">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#007aff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Terugbetalingen">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -584,6 +589,14 @@
     </div>
 
     <div class="settings-section">
+      <h3>Meldingen</h3>
+      <p class="muted" style="font-size:13px; line-height:1.45;">Ontvang een melding wanneer een nieuwe kost voor jou of een rekening waarvan je lid bent wordt toegevoegd. Voor meldingen als de app gesloten is, moet push in Supabase worden ingesteld.</p>
+      <div id="notificationStatus" class="muted" style="font-size:12px; margin-bottom:10px;">Meldingen staan uit.</div>
+      <button id="notificationToggleBtn" class="full" type="button" onclick="enableExpenseNotifications()">Meldingen inschakelen</button>
+      <button id="notificationDisableBtn" class="full secondary" style="margin-top:8px;" type="button" onclick="disableExpenseNotifications()">Meldingen uitschakelen</button>
+    </div>
+
+    <div class="settings-section">
       <h3>Profiel</h3>
       <label for="displayNameInput">Weergavenaam</label>
       <input id="displayNameInput" placeholder="Jouw weergavenaam">
@@ -666,6 +679,11 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let data = { people: [], peopleObjects: [], accounts: [], expenses: [] };
 let selectedPerson = null;
 let currentUserName = "";
+let currentUserId = "";
+let notificationsEnabled = false;
+let appServiceWorkerRegistration = null;
+// Vul de publieke VAPID-sleutel in nadat je die in de Supabase-configuratie hebt aangemaakt.
+const VAPID_PUBLIC_KEY = "VUL_HIER_DE_PUBLIEKE_VAPID_SLEUTEL_IN";
 let currentUserEmail = "";
 let avatarUrl = "";
 let currentPage = 1;
@@ -760,12 +778,121 @@ function startExpensesRealtime() {
 
   expensesRealtimeChannel = supabaseClient
     .channel(`expenses-status-${currentUserEmail}`)
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "expenses" }, payload => {
+      notifyForNewExpense(payload.new);
+      scheduleRealtimeRefresh();
+    })
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "expenses" }, scheduleRealtimeRefresh)
     .subscribe(status => {
       if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         console.warn("Realtime-updates voor kosten zijn tijdelijk niet beschikbaar.");
       }
     });
+}
+
+function notificationPreferenceKey() {
+  return currentUserId ? `repayment-notifications-${currentUserId}` : "repayment-notifications";
+}
+
+function updateNotificationSettingsUI() {
+  const status = document.getElementById("notificationStatus");
+  const enableBtn = document.getElementById("notificationToggleBtn");
+  const disableBtn = document.getElementById("notificationDisableBtn");
+  if (!status || !enableBtn || !disableBtn) return;
+  const permission = ("Notification" in window) ? Notification.permission : "unsupported";
+  status.textContent = notificationsEnabled
+    ? (permission === "granted" ? "Meldingen zijn ingeschakeld op dit apparaat." : permission === "denied" ? "Meldingen zijn geblokkeerd in je browserinstellingen." : "Meldingen zijn nog niet beschikbaar in deze browser.")
+    : "Meldingen staan uit.";
+  enableBtn.disabled = notificationsEnabled;
+  disableBtn.disabled = !notificationsEnabled;
+}
+
+async function enableExpenseNotifications() {
+  if (!("Notification" in window)) {
+    showMsg("Deze browser ondersteunt geen webmeldingen.", true);
+    return;
+  }
+  if (!window.isSecureContext) {
+    showMsg("Meldingen werken alleen via een beveiligde HTTPS-verbinding.", true);
+    return;
+  }
+  try {
+    if (Notification.permission === "default") {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") throw new Error("Je hebt geen toestemming gegeven voor meldingen.");
+    }
+    if (Notification.permission !== "granted") throw new Error("Meldingen zijn geblokkeerd in de browserinstellingen.");
+    notificationsEnabled = true;
+    try { localStorage.setItem(notificationPreferenceKey(), "on"); } catch (_) {}
+    if ("serviceWorker" in navigator) {
+      appServiceWorkerRegistration = await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
+      await navigator.serviceWorker.ready;
+    }
+    updateNotificationSettingsUI();
+    if (!VAPID_PUBLIC_KEY.startsWith("VUL_HIER")) {
+      await registerPushSubscription();
+      showMsg("Meldingen ingeschakeld. Achtergrondmeldingen werken zodra ook de Supabase-pushfunctie en databasewebhook zijn ingesteld.");
+    } else {
+      showMsg("Meldingen ingeschakeld zolang de app open is. Voor meldingen als de app gesloten is, moet de pushconfiguratie in Supabase nog worden voltooid.");
+    }
+  } catch (err) {
+    showMsg(err.message || "Meldingen konden niet worden ingeschakeld.", true);
+  }
+}
+
+function disableExpenseNotifications() {
+  notificationsEnabled = false;
+  try { localStorage.removeItem(notificationPreferenceKey()); } catch (_) {}
+  updateNotificationSettingsUI();
+  showMsg("Meldingen zijn uitgeschakeld op dit apparaat.");
+}
+
+function expenseIsRelevantToCurrentUser(expense) {
+  if (!expense || !currentUserName) return false;
+  return (expense.splits || []).some(split => {
+    if (split.person === currentUserName) return true;
+    const account = (data.accounts || []).find(item => item.name === split.person);
+    return Boolean(account && Array.isArray(account.members) && account.members.includes(currentUserName));
+  });
+}
+
+async function notifyForNewExpense(expense) {
+  if (!notificationsEnabled || !expenseIsRelevantToCurrentUser(expense)) return;
+  // Toon ook een systeemmelding wanneer de website openstaat op een computer.
+  const title = "Nieuwe kost ontvangen";
+  const body = `${expense.description || "Nieuwe kost"} · ${euro(expense.amount)}`;
+  try {
+    if (appServiceWorkerRegistration || ("serviceWorker" in navigator)) {
+      const registration = appServiceWorkerRegistration || await navigator.serviceWorker.ready;
+      await registration.showNotification(title, { body, icon: "./favicon.ico", badge: "./favicon.ico", tag: `expense-${expense.id}` });
+    } else {
+      new Notification(title, { body, tag: `expense-${expense.id}` });
+    }
+  } catch (err) {
+    console.warn("Kon melding voor nieuwe kost niet tonen:", err);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+async function registerPushSubscription() {
+  if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith("VUL_HIER")) return false;
+  if (!appServiceWorkerRegistration) appServiceWorkerRegistration = await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
+  const subscription = await appServiceWorkerRegistration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+  const { error } = await supabaseClient.from("push_subscriptions").upsert({
+    endpoint: subscription.endpoint,
+    user_id: currentUserId,
+    email: currentUserEmail,
+    person_name: currentUserName,
+    subscription: subscription.toJSON()
+  }, { onConflict: "endpoint" });
+  if (error) throw error;
+  return true;
 }
 
 function toggleDropdown(e) {
@@ -1902,7 +2029,14 @@ async function initSession(session) {
       document.getElementById("authScreen").style.display = "none";
       document.getElementById("appWrap").style.display = "block";
 
+      currentUserId = session.user.id || "";
       currentUserEmail = session.user.email || "";
+      try { notificationsEnabled = localStorage.getItem(notificationPreferenceKey()) === "on"; } catch (_) { notificationsEnabled = false; }
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+          .then(registration => { appServiceWorkerRegistration = registration; })
+          .catch(err => console.warn("Service worker kon niet worden geregistreerd:", err));
+      }
       const meta = session.user.user_metadata || {};
       currentUserName = meta.display_name || currentUserEmail.split('@')[0];
       setThemePreference(meta.theme_preference || themePreference);
@@ -1925,6 +2059,7 @@ async function initSession(session) {
       
       await ensurePersonExists(currentUserName, currentUserEmail);
       await fetchUserRole(session.user);
+      updateNotificationSettingsUI();
       startExpensesRealtime();
       await loadData(showLoader);
     } else {
