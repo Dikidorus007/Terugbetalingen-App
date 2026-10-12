@@ -1,0 +1,17 @@
+{
+  "name": "Terugbetalingen",
+  "short_name": "Terugbetalingen",
+  "description": "Beheer gedeelde kosten en terugbetalingen",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#007aff",
+  "icons": [
+    {
+      "src": "./favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
