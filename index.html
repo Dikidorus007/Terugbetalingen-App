@@ -828,9 +828,12 @@ async function enableExpenseNotifications() {
       await navigator.serviceWorker.ready;
     }
     updateNotificationSettingsUI();
-    showMsg(VAPID_PUBLIC_KEY.startsWith("VUL_HIER")
-      ? "Meldingen ingeschakeld zolang de app open is. Voor meldingen als de app gesloten is, moet de pushconfiguratie in Supabase nog worden voltooid."
-      : "Meldingen ingeschakeld op dit apparaat.");
+    if (!VAPID_PUBLIC_KEY.startsWith("VUL_HIER")) {
+      await registerPushSubscription();
+      showMsg("Meldingen ingeschakeld. Achtergrondmeldingen werken zodra ook de Supabase-pushfunctie en databasewebhook zijn ingesteld.");
+    } else {
+      showMsg("Meldingen ingeschakeld zolang de app open is. Voor meldingen als de app gesloten is, moet de pushconfiguratie in Supabase nog worden voltooid.");
+    }
   } catch (err) {
     showMsg(err.message || "Meldingen konden niet worden ingeschakeld.", true);
   }
