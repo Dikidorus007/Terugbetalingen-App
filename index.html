@@ -799,8 +799,9 @@ function updateNotificationSettingsUI() {
   const enableBtn = document.getElementById("notificationToggleBtn");
   const disableBtn = document.getElementById("notificationDisableBtn");
   if (!status || !enableBtn || !disableBtn) return;
+  const permission = ("Notification" in window) ? Notification.permission : "unsupported";
   status.textContent = notificationsEnabled
-    ? (Notification.permission === "granted" ? "Meldingen zijn ingeschakeld op dit apparaat." : "Meldingen zijn ingeschakeld in de app; geef toestemming in je browser.")
+    ? (permission === "granted" ? "Meldingen zijn ingeschakeld op dit apparaat." : permission === "denied" ? "Meldingen zijn geblokkeerd in je browserinstellingen." : "Meldingen zijn nog niet beschikbaar in deze browser.")
     : "Meldingen staan uit.";
   enableBtn.disabled = notificationsEnabled;
   disableBtn.disabled = !notificationsEnabled;
@@ -857,10 +858,7 @@ function expenseIsRelevantToCurrentUser(expense) {
 
 async function notifyForNewExpense(expense) {
   if (!notificationsEnabled || !expenseIsRelevantToCurrentUser(expense)) return;
-  if (document.visibilityState === "visible") {
-    // De gebruiker ziet de app al; voorkom een storende melding in hetzelfde venster.
-    return;
-  }
+  // Toon ook een systeemmelding wanneer de website openstaat op een computer.
   const title = "Nieuwe kost ontvangen";
   const body = `${expense.description || "Nieuwe kost"} · ${euro(expense.amount)}`;
   try {
