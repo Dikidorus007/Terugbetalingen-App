@@ -38,7 +38,7 @@ self.addEventListener("push", event => {
 
 self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const destination = new URL((event.notification.data && event.notification.data.url) || "./", self.location.origin).href;
+  const destination = new URL((event.notification.data && event.notification.data.url) || "./", self.registration.scope).href;
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then(windowClients => {
       for (const client of windowClients) {
