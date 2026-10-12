@@ -18,22 +18,30 @@ self.addEventListener("activate", event => {
   );
 });
 
-// A foreground app can display a local notification after Supabase Realtime detects
-// a new row. For background push, a server must send a Web Push message to this handler.
 self.addEventListener("push", event => {
   let payload = {};
-  try { payload = event.data ? event.data.json() : {}; }
-  catch (_) { payload = { body: event.data ? event.data.text() : "" }; }
+  try { 
+    payload = event.data ? event.data.json() : {}; 
+  } catch (_) { 
+    payload = { body: event.data ? event.data.text() : "" }; 
+  }
 
   const title = payload.title || "Nieuwe kost ontvangen";
   const options = {
     body: payload.body || "Er is een nieuwe kost toegevoegd.",
-    icon: "./favicon.ico",
-    badge: "./favicon.ico",
-    data: { url: payload.url || "./", expenseId: payload.expenseId || null },
+    // Gebruik absolute paden (/ i.p.v. ./) voor iOS compatibiliteit
+    icon: "/favicon.ico",
+    badge: "/favicon.ico",
+    data: { 
+      url: payload.url || "/", 
+      expenseId: payload.expenseId || null 
+    },
     tag: payload.tag || (payload.expenseId ? "expense-" + payload.expenseId : "new-expense")
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
 });
 
 self.addEventListener("notificationclick", event => {
