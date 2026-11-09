@@ -1,5 +1,5 @@
-const CACHE_NAME = "terugbetalingen-shell-v1";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./favicon.ico"];
+const CACHE_NAME = "terugbetalingen-shell-v2";
+const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./favicon.ico", "./icon-512.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -20,28 +20,25 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("push", event => {
   let payload = {};
-  try { 
-    payload = event.data ? event.data.json() : {}; 
-  } catch (_) { 
-    payload = { body: event.data ? event.data.text() : "" }; 
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (_) {
+    payload = { body: event.data ? event.data.text() : "" };
   }
 
   const title = payload.title || "Nieuwe kost ontvangen";
   const options = {
     body: payload.body || "Er is een nieuwe kost toegevoegd.",
-    // Gebruik absolute paden (/ i.p.v. ./) voor iOS compatibiliteit
-    icon: "/favicon.ico",
-    badge: "/favicon.ico",
-    data: { 
-      url: payload.url || "/", 
-      expenseId: payload.expenseId || null 
+    icon: "./icon-512.png",
+    badge: "./favicon.ico",
+    data: {
+      url: payload.url || "./",
+      expenseId: payload.expenseId || null
     },
     tag: payload.tag || (payload.expenseId ? "expense-" + payload.expenseId : "new-expense")
   };
 
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener("notificationclick", event => {

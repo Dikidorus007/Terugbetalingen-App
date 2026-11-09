@@ -308,6 +308,26 @@
     .status-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
     .status-badge.open { background: rgba(255, 59, 48, 0.12); color: var(--red); }
     .status-badge.pending { background: rgba(255, 149, 0, 0.15); color: var(--orange); }
+    .receipt-btn { min-height: 30px !important; padding: 5px 8px; font-size: 12px; }
+    .receipt-preview { display:none; margin-top:10px; align-items:center; gap:10px; padding:8px; background:var(--surface-subtle); border:1px solid var(--line); border-radius:10px; font-size:13px; }
+    .receipt-preview.visible { display:flex; }
+    .receipt-preview img { width:42px; height:42px; object-fit:cover; border-radius:7px; }
+    .expense-category-row td { padding:16px 10px 6px; border:0; color:var(--muted); background:transparent; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
+    .mobile-expenses { display:none; }
+    .expense-mobile-card { padding:13px 14px; background:var(--card-solid); border-bottom:1px solid var(--line); }
+    .expense-mobile-card:last-child { border-bottom:0; }
+    .expense-mobile-card.selected { background:rgba(0,122,255,.07); }
+    .expense-mobile-card.pending-payment { opacity:.68; }
+    .expense-mobile-top { display:flex; align-items:flex-start; gap:10px; }
+    .expense-mobile-main { flex:1; min-width:0; }
+    .expense-mobile-title { font-weight:700; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .expense-mobile-meta { margin-top:4px; color:var(--muted); font-size:12px; }
+    .expense-mobile-amount { font-size:16px; font-weight:700; white-space:nowrap; }
+    .expense-mobile-footer { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:10px 0 0 28px; }
+    .status-icon { display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:700; }
+    .status-icon.open { color:var(--red); }
+    .status-icon.pending { color:var(--orange); }
+    .receipt-image { display:block; width:100%; max-height:70vh; object-fit:contain; border-radius:12px; background:var(--surface-subtle); }
 
     .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 10px; }
     .page-info { font-size: 13px; color: var(--muted); }
@@ -405,6 +425,9 @@
       .tabs::-webkit-scrollbar { display: none; }
       .tab-btn { flex: 1 0 auto; min-height: 44px; padding: 10px 14px; }
       .table-container { -webkit-overflow-scrolling: touch; }
+      .table-container > table { display:none; }
+      .mobile-expenses { display:block; }
+      .expense-category-row { padding:14px 14px 6px; color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; background:var(--surface-subtle); }
       th, td { padding: 10px 8px; font-size: 13px; }
       .row { grid-template-columns: 1fr; gap: 0; }
       .selection-actions-bar { flex-direction: column; gap: 10px; align-items: stretch; text-align: center; }
@@ -590,7 +613,7 @@
 
     <div class="settings-section">
       <h3>Meldingen</h3>
-      <p class="muted" style="font-size:13px; line-height:1.45;">Ontvang een melding wanneer een nieuwe kost voor jou of een rekening waarvan je lid bent wordt toegevoegd. Voor meldingen als de app gesloten is, moet push in Supabase worden ingesteld.</p>
+      <p class="muted" style="font-size:13px; line-height:1.45;">Ontvang een melding wanneer een nieuwe kost voor jou of een rekening waarvan je lid bent wordt toegevoegd.</p>
       <div id="notificationStatus" class="muted" style="font-size:12px; margin-bottom:10px;">Meldingen staan uit.</div>
       <button id="notificationToggleBtn" class="full" type="button" onclick="enableExpenseNotifications()">Meldingen inschakelen</button>
       <button id="notificationDisableBtn" class="full secondary" style="margin-top:8px;" type="button" onclick="disableExpenseNotifications()">Meldingen uitschakelen</button>
@@ -636,6 +659,14 @@
         <div><label for="date">Datum</label><input id="date" type="date" required></div>
       </div>
 
+      <label for="receiptInput">Kassaticket (optioneel)</label>
+      <input id="receiptInput" type="file" accept="image/*" capture="environment" onchange="previewReceipt(this)">
+      <div id="receiptPreview" class="receipt-preview">
+        <img id="receiptPreviewImage" alt="Voorbeeld van kassaticket">
+        <span id="receiptPreviewName"></span>
+        <button type="button" class="small secondary" onclick="clearReceipt()">Verwijder</button>
+      </div>
+
       <div class="row" style="margin-top:14px;">
         <div>
           <label for="payer">Betaald door</label>
@@ -671,6 +702,13 @@
   </div>
 </div>
 
+<div id="receiptModal" class="modal" onclick="if(event.target===this)closeModal('receiptModal')">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><h2>Kassaticket</h2><button class="close" onclick="closeModal('receiptModal')">×</button></div>
+    <img id="receiptImage" class="receipt-image" alt="Kassaticket">
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://spkbprqsclypdidoadrm.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_N0qp_InFiqyV8ycP61aVBQ_nasLzXBA";
@@ -682,7 +720,6 @@ let currentUserName = "";
 let currentUserId = "";
 let notificationsEnabled = false;
 let appServiceWorkerRegistration = null;
-// Vul de publieke VAPID-sleutel in nadat je die in de Supabase-configuratie hebt aangemaakt.
 const VAPID_PUBLIC_KEY = "BCO4ACs1iKp5P8hU5G7nXGvdetZ_RhwK9Qm26O3V4Glb35fzu3IG8D0xdkbJGNX5qLeX4alh7DrJUAjAzwuhFsg";
 let currentUserEmail = "";
 let avatarUrl = "";
@@ -695,6 +732,7 @@ let isInitialLoad = true;
 let themePreference = "system";
 let expensesRealtimeChannel = null;
 let realtimeRefreshTimer = null;
+let receiptPreviewUrl = "";
 
 // Sortering variabelen: Standaard op recentste datum (desc)
 let sortField = 'date'; 
@@ -778,121 +816,12 @@ function startExpensesRealtime() {
 
   expensesRealtimeChannel = supabaseClient
     .channel(`expenses-status-${currentUserEmail}`)
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "expenses" }, payload => {
-      notifyForNewExpense(payload.new);
-      scheduleRealtimeRefresh();
-    })
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "expenses" }, scheduleRealtimeRefresh)
     .subscribe(status => {
       if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         console.warn("Realtime-updates voor kosten zijn tijdelijk niet beschikbaar.");
       }
     });
-}
-
-function notificationPreferenceKey() {
-  return currentUserId ? `repayment-notifications-${currentUserId}` : "repayment-notifications";
-}
-
-function updateNotificationSettingsUI() {
-  const status = document.getElementById("notificationStatus");
-  const enableBtn = document.getElementById("notificationToggleBtn");
-  const disableBtn = document.getElementById("notificationDisableBtn");
-  if (!status || !enableBtn || !disableBtn) return;
-  const permission = ("Notification" in window) ? Notification.permission : "unsupported";
-  status.textContent = notificationsEnabled
-    ? (permission === "granted" ? "Meldingen zijn ingeschakeld op dit apparaat." : permission === "denied" ? "Meldingen zijn geblokkeerd in je browserinstellingen." : "Meldingen zijn nog niet beschikbaar in deze browser.")
-    : "Meldingen staan uit.";
-  enableBtn.disabled = notificationsEnabled;
-  disableBtn.disabled = !notificationsEnabled;
-}
-
-async function enableExpenseNotifications() {
-  if (!("Notification" in window)) {
-    showMsg("Deze browser ondersteunt geen webmeldingen.", true);
-    return;
-  }
-  if (!window.isSecureContext) {
-    showMsg("Meldingen werken alleen via een beveiligde HTTPS-verbinding.", true);
-    return;
-  }
-  try {
-    if (Notification.permission === "default") {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") throw new Error("Je hebt geen toestemming gegeven voor meldingen.");
-    }
-    if (Notification.permission !== "granted") throw new Error("Meldingen zijn geblokkeerd in de browserinstellingen.");
-    notificationsEnabled = true;
-    try { localStorage.setItem(notificationPreferenceKey(), "on"); } catch (_) {}
-    if ("serviceWorker" in navigator) {
-      appServiceWorkerRegistration = await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
-      await navigator.serviceWorker.ready;
-    }
-    updateNotificationSettingsUI();
-    if (!VAPID_PUBLIC_KEY.startsWith("VUL_HIER")) {
-      await registerPushSubscription();
-      showMsg("Meldingen ingeschakeld. Achtergrondmeldingen werken zodra ook de Supabase-pushfunctie en databasewebhook zijn ingesteld.");
-    } else {
-      showMsg("Meldingen ingeschakeld zolang de app open is. Voor meldingen als de app gesloten is, moet de pushconfiguratie in Supabase nog worden voltooid.");
-    }
-  } catch (err) {
-    showMsg(err.message || "Meldingen konden niet worden ingeschakeld.", true);
-  }
-}
-
-function disableExpenseNotifications() {
-  notificationsEnabled = false;
-  try { localStorage.removeItem(notificationPreferenceKey()); } catch (_) {}
-  updateNotificationSettingsUI();
-  showMsg("Meldingen zijn uitgeschakeld op dit apparaat.");
-}
-
-function expenseIsRelevantToCurrentUser(expense) {
-  if (!expense || !currentUserName) return false;
-  return (expense.splits || []).some(split => {
-    if (split.person === currentUserName) return true;
-    const account = (data.accounts || []).find(item => item.name === split.person);
-    return Boolean(account && Array.isArray(account.members) && account.members.includes(currentUserName));
-  });
-}
-
-async function notifyForNewExpense(expense) {
-  if (!notificationsEnabled || !expenseIsRelevantToCurrentUser(expense)) return;
-  // Toon ook een systeemmelding wanneer de website openstaat op een computer.
-  const title = "Nieuwe kost ontvangen";
-  const body = `${expense.description || "Nieuwe kost"} · ${euro(expense.amount)}`;
-  try {
-    if (appServiceWorkerRegistration || ("serviceWorker" in navigator)) {
-      const registration = appServiceWorkerRegistration || await navigator.serviceWorker.ready;
-      await registration.showNotification(title, { body, icon: "./favicon.ico", badge: "./favicon.ico", tag: `expense-${expense.id}` });
-    } else {
-      new Notification(title, { body, tag: `expense-${expense.id}` });
-    }
-  } catch (err) {
-    console.warn("Kon melding voor nieuwe kost niet tonen:", err);
-  }
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
-}
-
-async function registerPushSubscription() {
-  if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith("VUL_HIER")) return false;
-  if (!appServiceWorkerRegistration) appServiceWorkerRegistration = await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
-  const subscription = await appServiceWorkerRegistration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
-  const { error } = await supabaseClient.from("push_subscriptions").upsert({
-    endpoint: subscription.endpoint,
-    user_id: currentUserId,
-    email: currentUserEmail,
-    person_name: currentUserName,
-    subscription: subscription.toJSON()
-  }, { onConflict: "endpoint" });
-  if (error) throw error;
-  return true;
 }
 
 function toggleDropdown(e) {
@@ -991,6 +920,77 @@ function showAppError(action, error) {
 function throwIfSupabaseError(result) {
   if (result.error) throw result.error;
   return result.data;
+}
+
+function expenseCategory(description) {
+  const text = String(description || "").toLowerCase();
+  const categories = [
+    ["Boodschappen", /delhaize|albert\s*heijn|carrefour|colruyt|lidl|aldi|jumbo|supermarkt|boodschap/],
+    ["Horeca", /restaurant|cafe|café|bar|pizza|sushi|takeaway|uber\s*eats|deliveroo|eten/],
+    ["Vervoer", /benzine|tank|parking|parkeren|trein|bus|de\s*lijn|nmbs|brandstof|taxi/],
+    ["Wonen & nuts", /huur|energie|elektriciteit|gas|water|internet|proximus|telenet/],
+    ["Gezondheid", /apotheek|dokter|tandarts|ziekenhuis|medisch/],
+    ["Abonnementen", /netflix|spotify|disney|icloud|abonnement|verzekering/],
+    ["Vrije tijd", /cinema|film|concert|sport|vakantie|hotel|museum/],
+  ];
+  return categories.find(([, pattern]) => pattern.test(text))?.[0] || "Overig";
+}
+
+function previewReceipt(input) {
+  const file = input.files?.[0];
+  const preview = document.getElementById("receiptPreview");
+  if (!file) return clearReceipt();
+  if (receiptPreviewUrl) URL.revokeObjectURL(receiptPreviewUrl);
+  receiptPreviewUrl = URL.createObjectURL(file);
+  document.getElementById("receiptPreviewImage").src = receiptPreviewUrl;
+  document.getElementById("receiptPreviewName").textContent = file.name;
+  preview.classList.add("visible");
+}
+
+function clearReceipt() {
+  if (receiptPreviewUrl) URL.revokeObjectURL(receiptPreviewUrl);
+  receiptPreviewUrl = "";
+  document.getElementById("receiptInput").value = "";
+  document.getElementById("receiptPreview").classList.remove("visible");
+}
+
+async function compressReceipt(file) {
+  const image = window.createImageBitmap
+    ? await createImageBitmap(file)
+    : await new Promise((resolve, reject) => {
+        const fallbackImage = new Image();
+        fallbackImage.onload = () => resolve(fallbackImage);
+        fallbackImage.onerror = () => reject(new Error("Ticket kon niet worden gelezen."));
+        fallbackImage.src = URL.createObjectURL(file);
+      });
+  const maxSide = 1600;
+  const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(image.width * scale);
+  canvas.height = Math.round(image.height * scale);
+  canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+  if (typeof image.close === "function") image.close();
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.72));
+  if (!blob) throw new Error("Ticket kon niet worden gecomprimeerd.");
+  return blob;
+}
+
+async function uploadReceipt(expenseId, file) {
+  const compressed = await compressReceipt(file);
+  const path = `${expenseId}/${Date.now()}.webp`;
+  throwIfSupabaseError(await supabaseClient.storage.from("receipts").upload(path, compressed, { contentType: "image/webp", upsert: false }));
+  throwIfSupabaseError(await supabaseClient.from("expenses").update({ receipt_path: path }).eq("id", expenseId));
+}
+
+async function openReceipt(path) {
+  try {
+    const { data, error } = await supabaseClient.storage.from("receipts").createSignedUrl(path, 300);
+    if (error) throw error;
+    document.getElementById("receiptImage").src = data.signedUrl;
+    openModal("receiptModal");
+  } catch (err) {
+    showAppError("Openen van het kassaticket", err);
+  }
 }
 
 function renderOverdueExpensesNotice(targetPerson) {
@@ -1210,6 +1210,7 @@ async function loadData(isInitial = false) {
     data.people = data.peopleObjects.map(p => p.name);
     data.accounts = accountsData || [];
     data.expenses = expensesData || [];
+    selectedExpenses.clear();
 
     if (!selectedPerson) {
       selectedPerson = currentUserName;
@@ -1400,6 +1401,10 @@ function getFilteredRows() {
   });
 
   rows.sort((a, b) => {
+    if (activeTab === 'open') {
+      const categoryCompare = expenseCategory(a.e.description).localeCompare(expenseCategory(b.e.description), 'nl');
+      if (categoryCompare) return categoryCompare;
+    }
     let valA, valB;
     if (sortField === 'description') {
       valA = a.e.description.toLowerCase();
@@ -1423,7 +1428,14 @@ function getFilteredRows() {
   return rows;
 }
 
+function canSelectExpenseRow(row) {
+  // Een betaler mag een kost die al "in verwerking" staat niet opnieuw selecteren.
+  return !(activeTab === 'open' && row.s.status === 'pending_confirmation');
+}
+
 function toggleSelection(key) {
+  const row = getFilteredRows().find(({ei, si}) => `${ei}-${si}` === key);
+  if (!row || !canSelectExpenseRow(row)) return;
   if (selectedExpenses.has(key)) selectedExpenses.delete(key);
   else selectedExpenses.add(key);
   renderExpenses();
@@ -1431,7 +1443,7 @@ function toggleSelection(key) {
 
 function selectAllTotalExpenses() {
   const rows = getFilteredRows();
-  rows.forEach(({ei, si}) => selectedExpenses.add(`${ei}-${si}`));
+  rows.filter(canSelectExpenseRow).forEach(({ei, si}) => selectedExpenses.add(`${ei}-${si}`));
   renderExpenses();
 }
 
@@ -1457,7 +1469,7 @@ function renderExpenses() {
     return;
   }
   
-  const visibleKeys = paginatedRows.map(({ei, si}) => `${ei}-${si}`);
+  const visibleKeys = paginatedRows.filter(canSelectExpenseRow).map(({ei, si}) => `${ei}-${si}`);
   const allVisibleSelected = visibleKeys.length > 0 && visibleKeys.every(k => selectedExpenses.has(k));
   
   const personHeaderLabel = activeTab === 'open' ? 'Door' : 'Voor';
@@ -1484,28 +1496,58 @@ function renderExpenses() {
       </thead>
       <tbody>`;
   
+  let previousCategory = "";
   html += paginatedRows.map(({e, s, ei, si, displayPerson}) => {
     const key = `${ei}-${si}`;
     const checked = selectedExpenses.has(key);
     const pending = s.status === 'pending_confirmation';
+    const selectable = canSelectExpenseRow({e, s, ei, si, displayPerson});
+    const category = expenseCategory(e.description);
     const badge = pending ? `<span class="status-badge pending">In verwerking</span>` : `<span class="status-badge open">Openstaand</span>`;
+    const categoryRow = activeTab === 'open' && category !== previousCategory
+      ? `<tr class="expense-category-row"><td colspan="5">${esc(category)}</td></tr>` : '';
+    previousCategory = category;
     
-    return `
-      <tr onclick="toggleSelection('${key}')" style="cursor:pointer;${checked ? 'background:rgba(0,122,255,.06);' : ''}">
-        <td class="checkbox-cell"><input type="checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation();toggleSelection('${key}')"></td>
+    return categoryRow + `
+      <tr onclick="toggleSelection('${key}')" style="cursor:${selectable ? 'pointer' : 'default'};${checked ? 'background:rgba(0,122,255,.06);' : ''}">
+        <td class="checkbox-cell"><input type="checkbox" ${checked ? 'checked' : ''} ${selectable ? '' : 'disabled'} onclick="event.stopPropagation();toggleSelection('${key}')"></td>
         <td>
           <b>${esc(e.description)}</b>
           <div class="muted" style="font-size:11px; margin-top:2px;">${esc(e.date || '')}</div>
         </td>
         <td>${euro(s.amount)}</td>
         <td><span class="muted" style="font-size:13px; font-weight: 500;">${esc(displayPerson)}</span></td>
-        <td>${badge}</td>
+        <td>${badge}${e.receipt_path ? ` <button class="small secondary receipt-btn" onclick="event.stopPropagation();openReceipt('${esc(e.receipt_path)}')">🧾</button>` : ''}</td>
       </tr>`;
   }).join('');
   
   html += `</tbody></table>`;
 
-  const allTotalSelected = rows.length > 0 && rows.every(({ei, si}) => selectedExpenses.has(`${ei}-${si}`));
+  const selectableRows = rows.filter(canSelectExpenseRow);
+  const allTotalSelected = selectableRows.length > 0 && selectableRows.every(({ei, si}) => selectedExpenses.has(`${ei}-${si}`));
+
+  let mobileHtml = '';
+  let mobileCategory = '';
+  paginatedRows.forEach(row => {
+    const { e, s, ei, si, displayPerson } = row;
+    const key = `${ei}-${si}`;
+    const pending = s.status === 'pending_confirmation';
+    const selectable = canSelectExpenseRow(row);
+    const category = expenseCategory(e.description);
+    if (activeTab === 'open' && category !== mobileCategory) {
+      mobileHtml += `<div class="expense-category-row">${esc(category)}</div>`;
+      mobileCategory = category;
+    }
+    mobileHtml += `<div class="expense-mobile-card ${selectedExpenses.has(key) ? 'selected' : ''} ${!selectable ? 'pending-payment' : ''}" onclick="toggleSelection('${key}')">
+      <div class="expense-mobile-top">
+        <input type="checkbox" ${selectedExpenses.has(key) ? 'checked' : ''} ${selectable ? '' : 'disabled'} onclick="event.stopPropagation();toggleSelection('${key}')">
+        <div class="expense-mobile-main"><div class="expense-mobile-title">${esc(e.description)}</div><div class="expense-mobile-meta">${esc(displayPerson)} · ${esc(e.date || '')}</div></div>
+        <div class="expense-mobile-amount">${euro(s.amount)}</div>
+      </div>
+      <div class="expense-mobile-footer"><span class="status-icon ${pending ? 'pending' : 'open'}">${pending ? '⏳ In verwerking' : '● Openstaand'}</span>${e.receipt_path ? `<button class="small secondary receipt-btn" onclick="event.stopPropagation();openReceipt('${esc(e.receipt_path)}')">🧾 Ticket</button>` : ''}</div>
+    </div>`;
+  });
+  html += `<div class="mobile-expenses">${mobileHtml}</div>`;
 
   if (selectedExpenses.size) {
     const selectedRows = rows.filter(({ei, si}) => selectedExpenses.has(`${ei}-${si}`));
@@ -1516,8 +1558,8 @@ function renderExpenses() {
     html += `
       <div class="selection-actions-bar">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <span class="muted" style="font-size:13px"><b>${selectedExpenses.size}</b> van <b>${rows.length}</b> geselecteerd · <b>${euro(total)}</b></span>
-          ${!allTotalSelected ? `<button class="small secondary" onclick="selectAllTotalExpenses()">Selecteer alle ${rows.length} kosten</button>` : ''}
+          <span class="muted" style="font-size:13px"><b>${selectedExpenses.size}</b> van <b>${selectableRows.length}</b> geselecteerd · <b>${euro(total)}</b></span>
+          ${!allTotalSelected ? `<button class="small secondary" onclick="selectAllTotalExpenses()">Selecteer alle ${selectableRows.length} kosten</button>` : ''}
           <button class="small secondary" onclick="clearAllSelections()">Deselecteer alles</button>
         </div>
         <div style="display:flex; gap:8px;">
@@ -1530,7 +1572,7 @@ function renderExpenses() {
   } else {
     html += `
       <div class="selection-actions-bar" style="justify-content: flex-start;">
-        <button class="small secondary" onclick="selectAllTotalExpenses()">☑ Selecteer alle ${rows.length} kosten (alle pagina's)</button>
+        ${selectableRows.length ? `<button class="small secondary" onclick="selectAllTotalExpenses()">☑ Selecteer alle ${selectableRows.length} kosten (alle pagina's)</button>` : ''}
       </div>`;
   }
   
@@ -1540,7 +1582,7 @@ function renderExpenses() {
 function toggleSelectAllVisible(){
   const rows = getFilteredRows();
   const start = (currentPage - 1) * itemsPerPage;
-  const visible = rows.slice(start, start + itemsPerPage).map(({ei, si}) => `${ei}-${si}`);
+  const visible = rows.slice(start, start + itemsPerPage).filter(canSelectExpenseRow).map(({ei, si}) => `${ei}-${si}`);
   const all = visible.length && visible.every(k => selectedExpenses.has(k));
   visible.forEach(k => all ? selectedExpenses.delete(k) : selectedExpenses.add(k));
   renderExpenses();
@@ -1717,7 +1759,7 @@ function renderHistory() {
               </div>
               <span class="history-amount ${isIncoming ? 'incoming' : 'outgoing'}">${amountPrefix}${euro(s.amount)}</span>
             </div>
-            <div class="history-description">${esc(e.description)}</div>
+            <div class="history-description">${esc(e.description)}${e.receipt_path ? ` <button class="small secondary receipt-btn" onclick="openReceipt('${esc(e.receipt_path)}')">🧾 Ticket</button>` : ''}</div>
           </div>
         `;
       } else {
@@ -1744,7 +1786,7 @@ function renderHistory() {
                 const subPrefix = itemIncoming ? '+' : '-';
                 return `
                   <div class="history-sub-item">
-                    <span>${esc(e.description)}</span>
+                    <span>${esc(e.description)}${e.receipt_path ? ` <button class="small secondary receipt-btn" onclick="openReceipt('${esc(e.receipt_path)}')">🧾</button>` : ''}</span>
                     <span class="history-amount ${itemIncoming ? 'incoming' : 'outgoing'}" style="font-size:14px;">${subPrefix}${euro(s.amount)}</span>
                   </div>
                 `;
@@ -1784,7 +1826,7 @@ function renderHistory() {
             return `
               <div class="history-sub-item">
                 <div>
-                  <div><b>${esc(e.description)}</b> <span class="muted">· ${esc(displayName)}</span></div>
+                  <div><b>${esc(e.description)}</b> <span class="muted">· ${esc(displayName)}</span>${e.receipt_path ? ` <button class="small secondary receipt-btn" onclick="openReceipt('${esc(e.receipt_path)}')">🧾</button>` : ''}</div>
                   <div class="history-date">${s.paidAt || e.date}</div>
                 </div>
                 <span class="history-amount ${isIncoming ? 'incoming' : 'outgoing'}" style="font-size:14px;">${prefix}${euro(s.amount)}</span>
@@ -1962,11 +2004,14 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
     splits,
     status: "open"
   };
+  const receiptFile = document.getElementById("receiptInput").files?.[0];
 
   try {
-    throwIfSupabaseError(await supabaseClient.from('expenses').insert([newExpense]));
+    const expense = throwIfSupabaseError(await supabaseClient.from('expenses').insert([newExpense]).select().single());
+    if (receiptFile) await uploadReceipt(expense.id, receiptFile);
     closeModal("expenseModal");
     document.getElementById("expenseForm").reset();
+    clearReceipt();
     document.getElementById("date").value = today();
     await loadData(false);
   } catch (err) {
@@ -2029,14 +2074,7 @@ async function initSession(session) {
       document.getElementById("authScreen").style.display = "none";
       document.getElementById("appWrap").style.display = "block";
 
-      currentUserId = session.user.id || "";
       currentUserEmail = session.user.email || "";
-      try { notificationsEnabled = localStorage.getItem(notificationPreferenceKey()) === "on"; } catch (_) { notificationsEnabled = false; }
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
-          .then(registration => { appServiceWorkerRegistration = registration; })
-          .catch(err => console.warn("Service worker kon niet worden geregistreerd:", err));
-      }
       const meta = session.user.user_metadata || {};
       currentUserName = meta.display_name || currentUserEmail.split('@')[0];
       setThemePreference(meta.theme_preference || themePreference);
@@ -2059,7 +2097,6 @@ async function initSession(session) {
       
       await ensurePersonExists(currentUserName, currentUserEmail);
       await fetchUserRole(session.user);
-      updateNotificationSettingsUI();
       startExpensesRealtime();
       await loadData(showLoader);
     } else {
