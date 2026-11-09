@@ -425,7 +425,8 @@
       .tabs::-webkit-scrollbar { display: none; }
       .tab-btn { flex: 1 0 auto; min-height: 44px; padding: 10px 14px; }
       .table-container { -webkit-overflow-scrolling: touch; }
-      .table-container > table { display:none; }
+      /* De tabel wordt binnen #expenses opgebouwd, niet rechtstreeks in de container. */
+      .table-container table { display:none; }
       .mobile-expenses { display:block; }
       .expense-category-row { padding:14px 14px 6px; color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; background:var(--surface-subtle); }
       th, td { padding: 10px 8px; font-size: 13px; }
