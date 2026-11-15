@@ -208,6 +208,8 @@
 
     .auth-card h2 { margin-top: 0; margin-bottom: 6px; font-size: 24px; }
     .auth-card p { color: var(--muted); font-size: 14px; margin-top: 0; margin-bottom: 20px; }
+    .reset-password-card { text-align: left; }
+    .reset-password-icon { width: 50px; height: 50px; display:flex; align-items:center; justify-content:center; margin: 0 0 14px; border-radius: 15px; background: rgba(0, 122, 255, 0.12); color: var(--primary); font-size: 25px; }
 
     .wrap { max-width: 1100px; margin: auto; padding: 32px 20px 60px; }
     .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
@@ -500,6 +502,23 @@
   </div>
 </div>
 
+<!-- Password recovery screen -->
+<div id="passwordResetScreen" class="auth-overlay" style="display: none;">
+  <div class="auth-card reset-password-card">
+    <div class="reset-password-icon">🔐</div>
+    <h2>Nieuw wachtwoord</h2>
+    <p>Kies hieronder een nieuw wachtwoord voor je account.</p>
+    <div id="passwordResetMsg" class="msg-box"></div>
+    <form id="passwordResetForm">
+      <label for="resetPasswordInput">Nieuw wachtwoord</label>
+      <input id="resetPasswordInput" type="password" required minlength="6" autocomplete="new-password" placeholder="Minimaal 6 tekens">
+      <label for="resetPasswordConfirmInput">Bevestig nieuw wachtwoord</label>
+      <input id="resetPasswordConfirmInput" type="password" required minlength="6" autocomplete="new-password" placeholder="Herhaal wachtwoord">
+      <button id="passwordResetSubmitBtn" class="full" type="submit">Wachtwoord opslaan</button>
+    </form>
+  </div>
+</div>
+
 <!-- Main Application -->
 <div id="appWrap" class="wrap" style="display: none;">
   <div class="top">
@@ -782,6 +801,7 @@ let isInitialLoad = true;
 let themePreference = "system";
 let expensesRealtimeChannel = null;
 let cashRealtimeChannel = null;
+let passwordRecoveryActive = /(?:[#?].*\btype=recovery\b)/i.test(window.location.href);
 let realtimeRefreshTimer = null;
 let receiptPreviewUrl = "";
 let cashBalanceHidden = false;
@@ -1044,6 +1064,55 @@ function showAuthMsg(text, isError = false) {
   box.className = `msg-box ${isError ? 'error-msg' : 'success-msg'}`;
 }
 
+function showPasswordResetMsg(text, isError = false) {
+  const box = document.getElementById("passwordResetMsg");
+  if (!text) { box.style.display = "none"; return; }
+  box.textContent = text;
+  box.className = `msg-box ${isError ? 'error-msg' : 'success-msg'}`;
+}
+
+function showPasswordResetScreen() {
+  document.getElementById("appWrap").style.display = "none";
+  document.getElementById("authScreen").style.display = "none";
+  document.getElementById("passwordResetScreen").style.display = "flex";
+  showPasswordResetMsg("");
+  hideLoading();
+  // De herstelcode staat in de URL-fragment; zodra Supabase ze heeft verwerkt mag die weg.
+  if (window.location.hash) history.replaceState(null, "", window.location.pathname);
+  setTimeout(() => document.getElementById("resetPasswordInput").focus(), 50);
+}
+
+document.getElementById("passwordResetForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  showPasswordResetMsg("");
+  const password = document.getElementById("resetPasswordInput").value;
+  const confirmation = document.getElementById("resetPasswordConfirmInput").value;
+  const submit = document.getElementById("passwordResetSubmitBtn");
+
+  if (password.length < 6) return showPasswordResetMsg("Je wachtwoord moet minimaal 6 tekens bevatten.", true);
+  if (password !== confirmation) return showPasswordResetMsg("De wachtwoorden komen niet overeen.", true);
+
+  submit.disabled = true;
+  submit.textContent = "Opslaan...";
+  try {
+    // De herstel-link maakt alleen een tijdelijke sessie voor de eigenaar van die link.
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) throw new Error("Deze herstel-link is verlopen of ongeldig. Vraag een nieuwe aan.");
+    const { error } = await supabaseClient.auth.updateUser({ password });
+    if (error) throw error;
+    passwordRecoveryActive = false;
+    document.getElementById("passwordResetForm").reset();
+    showPasswordResetMsg("Je wachtwoord is aangepast. Je wordt nu ingelogd.");
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    await initSession(session);
+  } catch (err) {
+    showPasswordResetMsg(err?.message || "Het wachtwoord kon niet worden aangepast. Vraag eventueel een nieuwe herstel-link aan.", true);
+  } finally {
+    submit.disabled = false;
+    submit.textContent = "Wachtwoord opslaan";
+  }
+});
+
 async function ensurePersonExists(name, email) {
   if (!email) return;
   try {
@@ -1092,8 +1161,10 @@ document.getElementById("authForm").addEventListener("submit", async (e) => {
 async function handleLogout() {
   stopExpensesRealtime();
   await supabaseClient.auth.signOut();
+  passwordRecoveryActive = false;
   selectedPerson = null;
   document.getElementById("appWrap").style.display = "none";
+  document.getElementById("passwordResetScreen").style.display = "none";
   document.getElementById("authScreen").style.display = "flex";
   document.getElementById("authForm").reset();
 }
@@ -2343,7 +2414,12 @@ async function initSession(session) {
 
   try {
     if (session) {
+      if (passwordRecoveryActive) {
+        showPasswordResetScreen();
+        return;
+      }
       document.getElementById("authScreen").style.display = "none";
+      document.getElementById("passwordResetScreen").style.display = "none";
       document.getElementById("appWrap").style.display = "block";
 
       currentUserId = session.user.id || "";
@@ -2384,6 +2460,7 @@ async function initSession(session) {
       stopExpensesRealtime();
       updatePasskeyUI();
       document.getElementById("appWrap").style.display = "none";
+      document.getElementById("passwordResetScreen").style.display = "none";
       document.getElementById("authScreen").style.display = "flex";
       hideLoading();
     }
@@ -2401,9 +2478,8 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => {
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
   if (event === 'PASSWORD_RECOVERY') {
+    passwordRecoveryActive = true;
     initSession(session);
-    openModal('settingsModal');
-    showMsg("Voer hier je nieuwe wachtwoord in om de herstelprocedure te voltooien.");
   } else if (event === 'SIGNED_OUT') {
     initSession(null);
   } else if (event === 'SIGNED_IN' && session) {
