@@ -312,6 +312,10 @@
     .receipt-preview { display:none; margin-top:10px; align-items:center; gap:10px; padding:8px; background:var(--surface-subtle); border:1px solid var(--line); border-radius:10px; font-size:13px; }
     .receipt-preview.visible { display:flex; }
     .receipt-preview img { width:42px; height:42px; object-fit:cover; border-radius:7px; }
+    .receipt-source-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:6px; }
+    .receipt-source-actions label { margin:0; min-height:44px; display:flex; align-items:center; justify-content:center; gap:7px; padding:9px; border:1px solid var(--line); border-radius:10px; background:var(--surface-subtle); color:var(--text); cursor:pointer; font-size:13px; font-weight:700; }
+    .receipt-source-actions label:active { opacity:.72; }
+    .receipt-source-actions input { position:absolute; width:1px; height:1px; min-height:0; opacity:0; pointer-events:none; }
     .expense-category-row td { padding:16px 10px 6px; border:0; color:var(--muted); background:transparent; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
     .mobile-expenses { display:none; }
     .expense-mobile-card { padding:13px 14px; background:var(--card-solid); border-bottom:1px solid var(--line); }
@@ -660,8 +664,11 @@
         <div><label for="date">Datum</label><input id="date" type="date" required></div>
       </div>
 
-      <label for="receiptInput">Kassaticket (optioneel)</label>
-      <input id="receiptInput" type="file" accept="image/*" capture="environment" onchange="previewReceipt(this)">
+      <label>Kassaticket (optioneel)</label>
+      <div class="receipt-source-actions">
+        <label>📷 Foto maken<input id="receiptCameraInput" type="file" accept="image/*" capture="environment" onchange="previewReceipt(this)"></label>
+        <label>🖼️ Kies uit galerij<input id="receiptGalleryInput" type="file" accept="image/*" onchange="previewReceipt(this)"></label>
+      </div>
       <div id="receiptPreview" class="receipt-preview">
         <img id="receiptPreviewImage" alt="Voorbeeld van kassaticket">
         <span id="receiptPreviewName"></span>
@@ -1028,6 +1035,9 @@ function previewReceipt(input) {
   const file = input.files?.[0];
   const preview = document.getElementById("receiptPreview");
   if (!file) return clearReceipt();
+  document.querySelectorAll("#receiptCameraInput, #receiptGalleryInput").forEach(otherInput => {
+    if (otherInput !== input) otherInput.value = "";
+  });
   if (receiptPreviewUrl) URL.revokeObjectURL(receiptPreviewUrl);
   receiptPreviewUrl = URL.createObjectURL(file);
   document.getElementById("receiptPreviewImage").src = receiptPreviewUrl;
@@ -1038,8 +1048,14 @@ function previewReceipt(input) {
 function clearReceipt() {
   if (receiptPreviewUrl) URL.revokeObjectURL(receiptPreviewUrl);
   receiptPreviewUrl = "";
-  document.getElementById("receiptInput").value = "";
+  document.querySelectorAll("#receiptCameraInput, #receiptGalleryInput").forEach(input => input.value = "");
   document.getElementById("receiptPreview").classList.remove("visible");
+}
+
+function getSelectedReceiptFile() {
+  return [...document.querySelectorAll("#receiptCameraInput, #receiptGalleryInput")]
+    .map(input => input.files?.[0])
+    .find(Boolean) || null;
 }
 
 async function compressReceipt(file) {
@@ -1051,16 +1067,16 @@ async function compressReceipt(file) {
         fallbackImage.onerror = () => reject(new Error("Ticket kon niet worden gelezen."));
         fallbackImage.src = URL.createObjectURL(file);
       });
-  // Een bon wordt doorgaans enkel op een telefoonscherm bekeken. 1200 px en
-  // WebP-kwaliteit 55 houden tekst leesbaar, maar verlagen de opslag sterk.
-  const maxSide = 1200;
+  // Een bon wordt doorgaans op een telefoonscherm bekeken. 1000 px en een
+  // lage WebP-kwaliteit beperken opslag fors, terwijl grotere tekst leesbaar blijft.
+  const maxSide = 1000;
   const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(image.width * scale);
   canvas.height = Math.round(image.height * scale);
   canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
   if (typeof image.close === "function") image.close();
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.55));
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.45));
   if (!blob) throw new Error("Ticket kon niet worden gecomprimeerd.");
   return blob;
 }
@@ -2094,7 +2110,7 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
     splits,
     status: "open"
   };
-  const receiptFile = document.getElementById("receiptInput").files?.[0];
+  const receiptFile = getSelectedReceiptFile();
 
   try {
     const expense = throwIfSupabaseError(await supabaseClient.from('expenses').insert([newExpense]).select().single());
