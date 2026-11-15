@@ -214,7 +214,7 @@
     h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
     .sub { color: var(--muted); margin: 4px 0 0; font-size: 15px; }
 
-    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .card {
       background: var(--card);
       backdrop-filter: blur(20px);
@@ -228,6 +228,16 @@
     .expenses-card { display: flex; flex-direction: column; }
     .metric { font-size: 26px; font-weight: 700; margin-top: 6px; letter-spacing: -0.5px; }
     .label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .cash-label { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+    .cash-visibility { position:relative; min-height:0 !important; padding:2px 5px; border-radius:7px; background:transparent; color:var(--muted); font-size:16px; }
+    .cash-visibility:hover { background:rgba(120,120,128,.14); color:var(--text); }
+    .cash-visibility.is-hidden::after { content:""; position:absolute; left:2px; top:50%; width:22px; height:2px; border-radius:2px; background:currentColor; transform:rotate(-45deg); }
+    .cash-hidden { filter:blur(7px); user-select:none; }
+    .cash-type-switch { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
+    .cash-type-switch label { margin:0; cursor:pointer; }
+    .cash-type-switch input { position:absolute; opacity:0; pointer-events:none; }
+    .cash-type-switch span { display:block; padding:10px; text-align:center; border:1px solid var(--line); border-radius:10px; color:var(--muted); }
+    .cash-type-switch input:checked + span { border-color:var(--primary); background:rgba(0,122,255,.11); color:var(--primary); font-weight:700; }
 
     button {
       border: 0;
@@ -485,6 +495,7 @@
       </div>
 
       <button id="authSubmitBtn" class="full" type="submit">Inloggen</button>
+      <button id="passkeyLoginBtn" class="full secondary" type="button" onclick="signInWithPasskey()">🔐 Inloggen met Face ID</button>
     </form>
   </div>
 </div>
@@ -517,6 +528,7 @@
     <div class="card"><div class="label">Nog te betalen</div><div id="pay" class="metric negative">€0,00</div></div>
     <div class="card"><div class="label">In verwerking</div><div id="pendingMetric" class="metric warning">€0,00</div></div>
     <div class="card"><div class="label">Openstaande kosten</div><div id="open" class="metric">0</div></div>
+    <div class="card"><div class="label cash-label"><span>Cashrekening</span><button class="cash-visibility" id="cashVisibilityBtn" type="button" onclick="toggleCashVisibility()" aria-label="Cashsaldo verbergen of tonen">👁</button></div><div id="cashBalance" class="metric">€0,00</div></div>
   </div>
 
   <div id="appStatusMsg" class="app-message" role="alert"></div>
@@ -524,6 +536,7 @@
 
   <div class="toolbar">
     <button id="addExpenseBtn" onclick="openModal('expenseModal')">＋ Nieuwe kost</button>
+    <button class="secondary" onclick="openModal('cashModal')">＋ Cash boeken</button>
     <button id="addAccountBtn" class="secondary" style="display: none;" onclick="openModal('accountModal')">＋ Nieuwe rekening / persoon</button>
     <button class="secondary" onclick="openModal('historyModal');renderHistory()">Historiek</button>
   </div>
@@ -625,6 +638,13 @@
     </div>
 
     <div class="settings-section">
+      <h3>Face ID / toestelvergrendeling</h3>
+      <p class="muted" style="font-size:13px; line-height:1.45;">Gebruik Face ID op iPhone of de veilige toestelvergrendeling op andere apparaten om zonder wachtwoord in te loggen.</p>
+      <button id="passkeyRegisterBtn" class="full secondary" type="button" onclick="registerPasskey()">Face ID instellen</button>
+      <div id="passkeyStatus" class="muted" style="font-size:12px; margin-top:8px;"></div>
+    </div>
+
+    <div class="settings-section">
       <h3>Profiel</h3>
       <label for="displayNameInput">Weergavenaam</label>
       <input id="displayNameInput" placeholder="Jouw weergavenaam">
@@ -717,12 +737,34 @@
   </div>
 </div>
 
+<div id="cashModal" class="modal" onclick="if(event.target===this)closeModal('cashModal')">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><h2>Cash boeken</h2><button class="close" onclick="closeModal('cashModal')">×</button></div>
+    <form id="cashForm">
+      <label>Type boeking</label>
+      <div class="cash-type-switch">
+        <label><input type="radio" name="cashDirection" value="in" checked><span>＋ Inboeken</span></label>
+        <label><input type="radio" name="cashDirection" value="out"><span>− Uitboeken</span></label>
+      </div>
+      <label for="cashAmount">Bedrag (€)</label>
+      <input id="cashAmount" type="number" min="0.01" step="0.01" required placeholder="0,00">
+      <label for="cashDescription">Omschrijving</label>
+      <input id="cashDescription" required maxlength="140" placeholder="Bijv. geld afgehaald bij bankautomaat">
+      <label for="cashDate">Datum</label>
+      <input id="cashDate" type="date" required>
+      <button class="full" type="submit">Boeking opslaan</button>
+    </form>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://spkbprqsclypdidoadrm.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_N0qp_InFiqyV8ycP61aVBQ_nasLzXBA";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { experimental: { passkey: true } }
+});
 
-let data = { people: [], peopleObjects: [], accounts: [], expenses: [] };
+let data = { people: [], peopleObjects: [], accounts: [], expenses: [], cashTransactions: [] };
 let selectedPerson = null;
 let currentUserName = "";
 let currentUserId = "";
@@ -739,8 +781,10 @@ let selectedExpenses = new Set();
 let isInitialLoad = true;
 let themePreference = "system";
 let expensesRealtimeChannel = null;
+let cashRealtimeChannel = null;
 let realtimeRefreshTimer = null;
 let receiptPreviewUrl = "";
+let cashBalanceHidden = false;
 
 // Sortering variabelen: Standaard op recentste datum (desc)
 let sortField = 'date'; 
@@ -796,7 +840,62 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () 
 try { setThemePreference(localStorage.getItem("repayment-theme-preference") || "system"); }
 catch (_) { setThemePreference("system"); }
 
+function updateCashVisibility() {
+  const balance = document.getElementById("cashBalance");
+  const button = document.getElementById("cashVisibilityBtn");
+  if (!balance || !button) return;
+  balance.classList.toggle("cash-hidden", cashBalanceHidden);
+  button.classList.toggle("is-hidden", cashBalanceHidden);
+  button.textContent = "👁";
+  button.setAttribute("aria-label", cashBalanceHidden ? "Cashsaldo tonen" : "Cashsaldo verbergen");
+}
+
+function toggleCashVisibility() {
+  cashBalanceHidden = !cashBalanceHidden;
+  try { localStorage.setItem("repayment-cash-hidden", cashBalanceHidden ? "yes" : "no"); } catch (_) {}
+  updateCashVisibility();
+}
+
+function updatePasskeyUI(message = "") {
+  const button = document.getElementById("passkeyRegisterBtn");
+  const status = document.getElementById("passkeyStatus");
+  const supported = window.isSecureContext && "PublicKeyCredential" in window;
+  if (button) button.disabled = !supported;
+  if (status) status.textContent = message || (supported ? "Face ID werkt via een passkey en de beveiliging van je toestel." : "Face ID/passkeys vereisen een recente browser en een beveiligde verbinding.");
+}
+
+async function registerPasskey() {
+  if (!(window.isSecureContext && "PublicKeyCredential" in window)) return showMsg("Face ID/passkeys zijn niet beschikbaar in deze browser.", true);
+  try {
+    const { error } = await supabaseClient.auth.registerPasskey();
+    if (error) throw error;
+    updatePasskeyUI("Face ID is ingesteld op dit toestel.");
+    showMsg("Face ID/passkey is succesvol ingesteld.");
+  } catch (err) {
+    const detail = err?.message || "Face ID kon niet worden ingesteld.";
+    updatePasskeyUI(detail);
+    showMsg(detail, true);
+  }
+}
+
+async function signInWithPasskey() {
+  showAuthMsg("");
+  const button = document.getElementById("passkeyLoginBtn");
+  button.disabled = true;
+  try {
+    const { data: authData, error } = await supabaseClient.auth.signInWithPasskey();
+    if (error) throw error;
+    if (authData?.session) await initSession(authData.session);
+  } catch (err) {
+    showAuthMsg(err?.message || "Inloggen met Face ID is niet gelukt.", true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 document.getElementById("date").value = today();
+document.getElementById("cashDate").value = today();
+try { cashBalanceHidden = localStorage.getItem("repayment-cash-hidden") === "yes"; } catch (_) {}
 
 function showLoading() { document.getElementById("loadingScreen").style.display = "flex"; }
 function hideLoading() { document.getElementById("loadingScreen").style.display = "none"; }
@@ -809,6 +908,10 @@ function stopExpensesRealtime() {
   if (expensesRealtimeChannel) {
     supabaseClient.removeChannel(expensesRealtimeChannel);
     expensesRealtimeChannel = null;
+  }
+  if (cashRealtimeChannel) {
+    supabaseClient.removeChannel(cashRealtimeChannel);
+    cashRealtimeChannel = null;
   }
 }
 
@@ -834,6 +937,11 @@ function startExpensesRealtime() {
         console.warn("Realtime-updates voor kosten zijn tijdelijk niet beschikbaar.");
       }
     });
+
+  cashRealtimeChannel = supabaseClient
+    .channel(`cash-${currentUserId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "cash_transactions", filter: `user_id=eq.${currentUserId}` }, scheduleRealtimeRefresh)
+    .subscribe();
 }
 
 function notificationPreferenceKey() {
@@ -1262,6 +1370,13 @@ function calculateMonthBalance(targetPerson, monthKey) {
       }
     });
   });
+  if (targetPerson === currentUserName) {
+    data.cashTransactions.forEach(transaction => {
+      if (monthKeyFromStoredDate(transaction.transaction_date) === monthKey) {
+        balance += Number(transaction.amount) || 0;
+      }
+    });
+  }
   return balance;
 }
 
@@ -1310,12 +1425,14 @@ async function loadData(isInitial = false) {
     const { data: peopleData, error: peopleError } = await supabaseClient.from('people').select('*').order('name');
     const { data: accountsData, error: accountsError } = await supabaseClient.from('accounts').select('*');
     const { data: expensesData, error: expensesError } = await supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
-    throwIfSupabaseError({ error: peopleError || accountsError || expensesError });
+    const { data: cashData, error: cashError } = await supabaseClient.from('cash_transactions').select('*').eq('user_id', currentUserId).order('transaction_date', { ascending: false }).order('created_at', { ascending: false });
+    throwIfSupabaseError({ error: peopleError || accountsError || expensesError || cashError });
 
     data.peopleObjects = peopleData || [];
     data.people = data.peopleObjects.map(p => p.name);
     data.accounts = accountsData || [];
     data.expenses = expensesData || [];
+    data.cashTransactions = cashData || [];
     selectedExpenses.clear();
 
     if (!selectedPerson) {
@@ -1440,6 +1557,10 @@ function render() {
   document.getElementById("pay").textContent = euro(toPay);
   document.getElementById("pendingMetric").textContent = euro(inProcessing);
   document.getElementById("open").textContent = openCount;
+  const cashBalance = data.cashTransactions.reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+  document.getElementById("cashBalance").textContent = euro(cashBalance);
+  document.getElementById("cashBalance").className = `metric ${cashBalance > 0 ? 'positive' : cashBalance < 0 ? 'negative' : ''}`;
+  updateCashVisibility();
 
   const payer = document.getElementById("payer");
   payer.innerHTML = `<option value="${esc(currentUserName)}">${esc(currentUserName)}</option>`;
@@ -1810,6 +1931,8 @@ function renderHistory() {
 
   const currentMonthPaidShares = [];
   const prevMonthPaidShares = [];
+  const currentCashTransactions = [];
+  const prevMonthCashTransactions = [];
 
   data.expenses.forEach(e => {
     (e.splits || []).forEach(s => {
@@ -1828,7 +1951,15 @@ function renderHistory() {
     });
   });
 
-  if (!currentMonthPaidShares.length && !prevMonthPaidShares.length) {
+  if (targetPerson === currentUserName) {
+    data.cashTransactions.forEach(transaction => {
+      const monthKey = monthKeyFromStoredDate(transaction.transaction_date);
+      if (monthKey === currentMonthKey) currentCashTransactions.push(transaction);
+      else if (monthKey === prevMonthKey) prevMonthCashTransactions.push(transaction);
+    });
+  }
+
+  if (!currentMonthPaidShares.length && !prevMonthPaidShares.length && !currentCashTransactions.length && !prevMonthCashTransactions.length) {
     document.getElementById("history").innerHTML = `<div class="empty">Nog geen betaalde kosten in de historiek voor ${esc(targetPerson)}.</div>`;
     return;
   }
@@ -1902,14 +2033,22 @@ function renderHistory() {
         `;
       }
     }).join("");
-  } else {
+  } else if (!currentCashTransactions.length) {
     html += `<div class="empty">Nog geen betalingen in de huidige maand.</div>`;
   }
 
-  if (prevMonthPaidShares.length) {
+  if (currentCashTransactions.length) {
+    html += `<div class="history-section-label" style="margin-top:16px;">Cashrekening</div>`;
+    html += currentCashTransactions.sort((a, b) => String(b.transaction_date).localeCompare(String(a.transaction_date))).map(transaction => {
+      const incoming = Number(transaction.amount) >= 0;
+      return `<div class="history-card history-item-single"><div class="history-row"><div><div class="history-person">Cashrekening</div><div class="history-date">${esc(transaction.transaction_date)}</div></div><span class="history-amount ${incoming ? 'incoming' : 'outgoing'}">${incoming ? '+' : '-'}${euro(Math.abs(Number(transaction.amount)))}</span></div><div class="history-description">${esc(transaction.description)}</div></div>`;
+    }).join("");
+  }
+
+  if (prevMonthPaidShares.length || prevMonthCashTransactions.length) {
     const prevMonthTotal = prevMonthPaidShares.reduce((total, { e, s }) => {
       return total + (e.payer === targetPerson ? Number(s.amount) : -Number(s.amount));
-    }, 0);
+    }, 0) + prevMonthCashTransactions.reduce((total, transaction) => total + (Number(transaction.amount) || 0), 0);
     const prevPrefix = prevMonthTotal >= 0 ? '+' : '-';
 
     html += `
@@ -1938,6 +2077,10 @@ function renderHistory() {
                 <span class="history-amount ${isIncoming ? 'incoming' : 'outgoing'}" style="font-size:14px;">${prefix}${euro(s.amount)}</span>
               </div>
             `;
+          }).join('')}
+          ${prevMonthCashTransactions.map(transaction => {
+            const incoming = Number(transaction.amount) >= 0;
+            return `<div class="history-sub-item"><div><div><b>Cashrekening</b> <span class="muted">· ${esc(transaction.description)}</span></div><div class="history-date">${esc(transaction.transaction_date)}</div></div><span class="history-amount ${incoming ? 'incoming' : 'outgoing'}" style="font-size:14px;">${incoming ? '+' : '-'}${euro(Math.abs(Number(transaction.amount)))}</span></div>`;
           }).join('')}
         </div>
       </details>
@@ -2125,6 +2268,29 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
   }
 });
 
+document.getElementById("cashForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const amount = Number(document.getElementById("cashAmount").value);
+  const direction = document.querySelector('input[name="cashDirection"]:checked').value;
+  const description = document.getElementById("cashDescription").value.trim();
+  if (!amount || amount <= 0 || !description) return;
+  try {
+    throwIfSupabaseError(await supabaseClient.from("cash_transactions").insert([{
+      user_id: currentUserId,
+      amount: direction === "in" ? amount : -amount,
+      description,
+      transaction_date: document.getElementById("cashDate").value
+    }]));
+    document.getElementById("cashForm").reset();
+    document.querySelector('input[name="cashDirection"][value="in"]').checked = true;
+    document.getElementById("cashDate").value = today();
+    closeModal("cashModal");
+    await loadData(false);
+  } catch (err) {
+    showAppError("Opslaan van de cashboeking", err);
+  }
+});
+
 document.getElementById("accountForm").addEventListener("submit", async e => {
   e.preventDefault();
   if (userRole !== 'admin') {
@@ -2211,10 +2377,12 @@ async function initSession(session) {
       await ensurePersonExists(currentUserName, currentUserEmail);
       await fetchUserRole(session.user);
       updateNotificationSettingsUI();
+      updatePasskeyUI();
       startExpensesRealtime();
       await loadData(showLoader);
     } else {
       stopExpensesRealtime();
+      updatePasskeyUI();
       document.getElementById("appWrap").style.display = "none";
       document.getElementById("authScreen").style.display = "flex";
       hideLoading();
