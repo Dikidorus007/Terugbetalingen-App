@@ -1,5 +1,5 @@
-const CACHE_NAME = "terugbetalingen-shell-v2";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./favicon.ico", "./icon-512.png"];
+const CACHE_NAME = "paynote-shell-v7";
+const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./favicon.ico", "./paynote-logo.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -29,7 +29,7 @@ self.addEventListener("push", event => {
   const title = payload.title || "Nieuwe kost ontvangen";
   const options = {
     body: payload.body || "Er is een nieuwe kost toegevoegd.",
-    icon: "./icon-512.png",
+    icon: "./paynote-logo.png",
     badge: "./favicon.ico",
     data: {
       url: payload.url || "./",

@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Terugbetalingen</title>
-  <link rel="icon" href="./icon-512.png">
+  <title>PayNote</title>
+  <link rel="icon" type="image/png" href="paynote-logo.png">
+  <link rel="apple-touch-icon" href="paynote-logo.png">
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#007aff">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Terugbetalingen">
+  <meta name="apple-mobile-web-app-title" content="PayNote">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -49,6 +50,14 @@
       --control-bg: #2c2c2e;
       --card-border: rgba(235, 235, 245, 0.1);
     }
+    html[data-theme="dark"] .history-card,
+    html[data-theme="dark"] details.history-group {
+      background: #2c2c2e;
+      border-color: rgba(235, 235, 245, 0.24);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    html[data-theme="dark"] details.history-group summary,
+    html[data-theme="dark"] .history-sub-item { background: #2c2c2e; }
 
     * { box-sizing: border-box; }
     html { -webkit-text-size-adjust: 100%; }
@@ -71,20 +80,13 @@
       z-index: 9999;
       transition: opacity 0.3s ease, visibility 0.3s ease;
     }
-
-    .spinner {
-      width: 44px;
-      height: 44px;
-      border: 4px solid var(--line);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 16px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-text { font-size: 15px; font-weight: 600; color: var(--muted); }
+    .loading-overlay.is-hiding { opacity:0; visibility:hidden; }
+    .loading-brand { display:flex; flex-direction:column; align-items:center; margin-bottom:30px; animation:loading-brand-in .45s cubic-bezier(.2,.9,.25,1.12) both; }
+    .loading-logo { width:82px; height:82px; border-radius:23px; object-fit:cover; box-shadow:0 12px 28px rgba(0,122,255,.22); }
+    .loading-name { margin-top:12px; font-size:27px; font-weight:750; letter-spacing:-.7px; color:var(--text); }
+    .spinner { width:31px; height:31px; border:3px solid var(--line); border-top-color:var(--primary); border-radius:50%; animation:spin .78s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes loading-brand-in { from { opacity:0; transform:translateY(12px) scale(.92); } to { opacity:1; transform:translateY(0) scale(1); } }
     .metric.positive { color: var(--green); }
     .metric.negative { color: var(--red); }
     .metric.warning { color: var(--orange); }
@@ -206,6 +208,11 @@
       border: 1px solid var(--line);
     }
 
+    .auth-brand { display:flex; flex-direction:column; align-items:center; text-align:center; margin:-2px 0 25px; }
+    .auth-brand-logo { width:64px; height:64px; border-radius:18px; object-fit:cover; box-shadow:0 8px 20px rgba(0,122,255,.2); }
+    .auth-brand-name { margin-top:10px; color:var(--text); font-size:24px; font-weight:750; letter-spacing:-.6px; }
+    .auth-brand-tagline { margin-top:3px; color:var(--muted); font-size:12px; font-weight:600; }
+    .auth-welcome { padding-top:18px; border-top:1px solid var(--line); }
     .auth-card h2 { margin-top: 0; margin-bottom: 6px; font-size: 24px; }
     .auth-card p { color: var(--muted); font-size: 14px; margin-top: 0; margin-bottom: 20px; }
     .reset-password-card { text-align: left; }
@@ -214,6 +221,12 @@
     .wrap { max-width: 1100px; margin: auto; padding: 32px 20px 60px; }
     .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
     h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand-title { display:flex; align-items:center; gap:10px; }
+    .brand-logo { width:36px; height:36px; border-radius:10px; object-fit:cover; box-shadow:0 3px 10px rgba(0,122,255,.22); }
+    #appWrap.is-account-switching .grid,
+    #appWrap.is-account-switching .toolbar,
+    #appWrap.is-account-switching .layout { animation: account-switch-in .28s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes account-switch-in { from { opacity:.45; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
     .sub { color: var(--muted); margin: 4px 0 0; font-size: 15px; }
 
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -235,6 +248,25 @@
     .cash-visibility:hover { background:rgba(120,120,128,.14); color:var(--text); }
     .cash-visibility.is-hidden::after { content:""; position:absolute; left:2px; top:50%; width:22px; height:2px; border-radius:2px; background:currentColor; transform:rotate(-45deg); }
     .cash-hidden { filter:blur(7px); user-select:none; }
+    .cash-dashboard-card select { margin-top:8px; min-height:36px; padding:6px 9px; font-size:14px; }
+    #appWrap.cash-view .expense-metric-card { display:none; }
+    #appWrap.cash-view .cash-dashboard-card { grid-column:1 / -1; }
+    #appWrap.cash-view .table-container { border:0; background:transparent; overflow:visible; }
+    .cash-ledger-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 14px; padding:0 2px 12px; border-bottom:1px solid var(--line); }
+    .cash-ledger-title { font-size:19px; font-weight:700; letter-spacing:-0.3px; }
+    .cash-ledger-subtitle { margin-top:3px; color:var(--muted); font-size:13px; }
+    .cash-ledger-list { display:flex; flex-direction:column; gap:10px; }
+    .cash-ledger-list .history-card { margin:0; }
+    .management-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 0; }
+    .management-row + .management-row { border-top:1px solid var(--line); }
+    .management-meta { color:var(--muted); font-size:12px; margin-top:2px; }
+    .contact-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; }
+    .contact-row + .contact-row { border-top:1px solid var(--line); }
+    .contact-name { font-weight:700; }
+    .account-number { margin-top:2px; color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+    .recipient-lookup { min-height:18px; margin:7px 2px 0; color:var(--muted); font-size:12px; }
+    .recipient-lookup.success { color:var(--green); font-weight:650; }
+    .recipient-lookup.error { color:var(--red); }
     .cash-type-switch { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
     .cash-type-switch label { margin:0; cursor:pointer; }
     .cash-type-switch input { position:absolute; opacity:0; pointer-events:none; }
@@ -270,10 +302,15 @@
     button.danger { background: rgba(255, 59, 48, 0.12); color: var(--red); }
     button.danger:hover { background: rgba(255, 59, 48, 0.2); }
 
-    .tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
-    .tab-btn { background: none; color: var(--muted); border-radius: 0; padding: 8px 16px; font-weight: 600; border-bottom: 2px solid transparent; }
-    .tab-btn:hover { background: none; color: var(--text); }
-    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tabs { display:flex; gap:0; position:relative; padding:4px; margin-bottom:16px; border:0; border-radius:12px; background:var(--control-bg); }
+    .tabs::before { content:""; position:absolute; inset:4px auto 4px 4px; width:calc(50% - 4px); border-radius:9px; background:var(--card-solid); box-shadow:0 2px 6px rgba(0,0,0,.08); transform:translateX(0); transition:transform .3s cubic-bezier(.2,.85,.25,1.1); }
+    .tabs[data-active="outgoing"]::before { transform:translateX(100%); }
+    .tab-btn { position:relative; z-index:1; flex:1; justify-content:center; min-width:0; background:transparent; color:var(--muted); border-radius:9px; padding:8px 12px; font-weight:600; border:0; transition:color .2s ease; }
+    .tab-btn:hover { background:transparent; color:var(--text); }
+    .tab-btn.active { color:var(--text); }
+    #activityCard.is-tab-switching .table-container,
+    #activityCard.is-tab-switching .pagination { animation:tab-content-in .24s ease-out both; }
+    @keyframes tab-content-in { from { opacity:.3; transform:translateX(8px); } to { opacity:1; transform:translateX(0); } }
 
     .layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
     .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -301,6 +338,17 @@
     .full { width: 100%; margin-top: 16px; }
 
     .accounts-container { max-height: 420px; overflow-y: auto; }
+    .account-item { width:100%; padding:10px 11px; margin-bottom:7px; border-radius:12px; cursor:pointer; display:flex; align-items:center; gap:10px; background:var(--card-solid); border:1px solid var(--line); color:var(--text); text-align:left; transition:transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+    .account-item:hover { transform:translateY(-1px); background:var(--surface-subtle); }
+    .account-item:active { transform:scale(.98); }
+    .account-item.selected { background:rgba(0,122,255,.1); border-color:var(--primary); box-shadow:0 3px 10px rgba(0,122,255,.12); }
+    .account-icon { width:31px; height:31px; flex:0 0 31px; display:flex; align-items:center; justify-content:center; border-radius:10px; background:rgba(120,120,128,.12); font-size:16px; }
+    .account-item.selected .account-icon { background:rgba(0,122,255,.16); }
+    .account-icon.shared { background:rgba(0,122,255,.13); }
+    .account-icon.cash { background:rgba(52,199,89,.14); }
+    .account-name { flex:1; min-width:0; }
+    .account-name-title { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:650; }
+    .account-item .account-number { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     
     .table-container {
       width: 100%;
@@ -350,6 +398,10 @@
     .page-btn-group { display: flex; gap: 6px; }
 
     .empty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); padding: 36px 10px; font-size: 14px; }
+    .empty-state { min-height:154px; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px 18px; color:var(--muted); }
+    .empty-state-icon { width:45px; height:45px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; border-radius:15px; background:rgba(0,122,255,.11); font-size:23px; }
+    .empty-state-title { color:var(--text); font-size:15px; font-weight:700; }
+    .empty-state-copy { max-width:260px; margin-top:4px; font-size:13px; line-height:1.4; }
     .pill { display: inline-block; padding: 4px 10px; border-radius: 20px; background: rgba(120, 120, 128, 0.12); font-size: 12px; font-weight: 500; }
     .pill.shared { background: rgba(0, 122, 255, 0.15); color: var(--primary); }
 
@@ -368,6 +420,9 @@
     .app-message.error-msg { display: flex; background: rgba(255, 59, 48, 0.12); color: #b42318; }
     .overdue-notice.visible { display: flex; background: rgba(255, 149, 0, 0.14); color: #8a4b00; }
     .overdue-notice strong { color: #6e3c00; }
+    .app-toast { position:fixed; left:50%; bottom:max(22px, env(safe-area-inset-bottom)); z-index:300; display:flex; align-items:center; gap:8px; padding:11px 15px; border-radius:999px; background:rgba(28,28,30,.92); color:#fff; box-shadow:0 10px 25px rgba(0,0,0,.22); font-size:14px; font-weight:650; opacity:0; pointer-events:none; transform:translate(-50%, 14px) scale(.94); transition:opacity .2s ease, transform .26s cubic-bezier(.2,.9,.25,1.18); white-space:nowrap; }
+    .app-toast.show { opacity:1; transform:translate(-50%, 0) scale(1); }
+    .app-toast-check { width:19px; height:19px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--green); color:#fff; font-size:12px; }
 
     .modal {
       position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4);
@@ -375,11 +430,27 @@
       display: none; align-items: center; justify-content: center; padding: 18px; z-index: 100;
     }
 
-    .modal.open { display: flex; }
+    .modal.open, .modal.closing { display: flex; }
+    .modal.open { animation: modal-backdrop-in .2s ease-out both; }
+    .modal.closing { pointer-events:none; animation: modal-backdrop-out .2s ease-in both; }
     .modal-card {
       background: var(--card-solid); border-radius: 18px; width: min(540px, 100%);
       max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
       border: 1px solid var(--line);
+    }
+    .modal.open .modal-card { animation: ios-modal-pop .34s cubic-bezier(.2,.9,.25,1.18) both; }
+    .modal.closing .modal-card { animation: ios-modal-dismiss .22s cubic-bezier(.4,0,1,1) both; }
+    .modal-card.is-swiping { animation:none !important; transition:none; transform:translateY(var(--swipe-offset, 0px)) scale(.99); will-change:transform; }
+    .modal-card.is-snapping-back { animation: ios-modal-snap-back .2s cubic-bezier(.2,.9,.25,1.18) both; }
+    @keyframes modal-backdrop-in { from { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } to { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); } }
+    @keyframes modal-backdrop-out { from { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); } to { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } }
+    @keyframes ios-modal-pop { from { opacity:0; transform:translateY(18px) scale(.92); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes ios-modal-dismiss { from { opacity:1; transform:translateY(var(--dismiss-offset, 0px)) scale(1); } to { opacity:0; transform:translateY(calc(var(--dismiss-offset, 0px) + 22px)) scale(.95); } }
+    @keyframes ios-modal-snap-back { from { transform:translateY(var(--swipe-offset, 0px)) scale(.99); } to { transform:translateY(0) scale(1); } }
+    @media (prefers-reduced-motion: reduce) {
+      .modal.open, .modal.closing, .modal.open .modal-card, .modal.closing .modal-card, .modal-card.is-snapping-back, #appWrap.is-account-switching .grid, #appWrap.is-account-switching .toolbar, #appWrap.is-account-switching .layout, #accountForm.is-type-switching > div, #activityCard.is-tab-switching .table-container, #activityCard.is-tab-switching .pagination, .loading-brand, .spinner { animation:none; }
+      .app-toast { transition:none; }
+      .type-switcher::before, .type-switcher label, .tabs::before, .tab-btn { transition:none; }
     }
 
     .small-modal { width: min(440px, 100%); }
@@ -401,15 +472,76 @@
     .dropdown-menu {
       position: absolute; top: 50px; right: 0; background: var(--card-solid);
       border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-      width: 170px; display: none; flex-direction: column; overflow: hidden; z-index: 50;
+      width: 174px; display: flex; flex-direction: column; overflow: visible; z-index: 50;
+      opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-8px) scale(0.92);
+      transform-origin: top right; transition: opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1), visibility 0s linear .22s;
     }
-    .dropdown-menu.open { display: flex; }
-    .dropdown-item { padding: 12px 16px; font-size: 14px; color: var(--text); background: none; border: none; text-align: left; cursor: pointer; width: 100%; border-radius: 0; justify-content: flex-start; }
+    .dropdown-menu::before { content:""; position:absolute; top:-6px; right:13px; width:11px; height:11px; background:var(--card-solid); border-left:1px solid var(--line); border-top:1px solid var(--line); transform:rotate(45deg); }
+    .dropdown-menu.open { opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1); transition-delay:0s; }
+    .dropdown-item { padding: 13px 16px; font-size: 14px; color: var(--text); background: none; border: none; text-align: right; cursor: pointer; width: 100%; border-radius: 0; justify-content: flex-end; }
     .dropdown-item:hover { background: rgba(0, 0, 0, 0.05); }
     .dropdown-item.danger-text { color: var(--red); }
 
     .settings-section { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 8px; }
     .settings-section h3 { font-size: 14px; font-weight: 700; margin: 12px 0 4px; color: var(--text); }
+    .settings-modal-card { width:min(390px, 100%); padding:20px; background:var(--bg); }
+    .settings-modal-card .modal-head { margin:0 -2px 16px; padding:2px 2px 14px; border-bottom:1px solid var(--line); }
+    .settings-modal-card .modal-head h2 { font-size:22px; letter-spacing:-.5px; }
+    .settings-modal-card .settings-section,
+    .settings-modal-card .settings-section[style] {
+      margin:14px 0 0 !important;
+      padding:14px !important;
+      border:1px solid var(--line) !important;
+      border-radius:14px;
+      background:var(--card-solid);
+      box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    .settings-modal-card .settings-section:first-of-type { margin-top:0 !important; }
+    .settings-modal-card .settings-section h3 {
+      margin:0 0 10px;
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+    }
+    .settings-modal-card .settings-section > p { margin:0 0 11px; }
+    .settings-modal-card .settings-section label { margin:12px 0 6px; }
+    .settings-modal-card .settings-section input:not([type="checkbox"]),
+    .settings-modal-card .settings-section select {
+      border-color:transparent;
+      background:var(--surface-subtle);
+      border-radius:10px;
+    }
+    .settings-modal-card .settings-section input:focus,
+    .settings-modal-card .settings-section select:focus { border-color:var(--primary); background:var(--card-solid); }
+    .settings-modal-card .settings-section .full { margin-top:12px; border-radius:11px; }
+    .settings-modal-card #notificationStatus,
+    .settings-modal-card #passkeyStatus { padding:9px 10px; border-radius:9px; background:var(--surface-subtle); }
+    .settings-modal-card #adminViewSettings label { margin:0; min-height:38px; justify-content:space-between; }
+    .settings-modal-card input[type="checkbox"] { width:20px; height:20px; }
+    .settings-category-nav { display:grid; grid-template-columns:1fr; gap:9px; margin:0 0 4px; padding:0; }
+    .settings-category-nav::-webkit-scrollbar { display:none; }
+    .settings-category-nav button { min-height:54px !important; padding:10px 14px; border-radius:13px; font-size:14px; background:var(--card-solid); color:var(--text); border:1px solid var(--line); justify-content:flex-start; }
+    .settings-category-nav button:hover { background:rgba(0,122,255,.14); color:var(--primary); }
+    .settings-category-back { width:auto; min-height:32px !important; margin:0 0 12px; padding:5px 10px; border-radius:16px; background:transparent; color:var(--primary); }
+    .settings-category-back:hover { background:rgba(0,122,255,.1); color:var(--primary); }
+    .settings-statusbar { display:flex; justify-content:center; gap:12px; margin:0 0 18px; padding:0 0 14px; border-bottom:1px solid var(--line); }
+    .settings-status-label, .settings-status-subtitle { display:none; }
+    .settings-notification-button { width:44px; min-width:44px; min-height:44px !important; padding:0; border-radius:50%; background:var(--surface-subtle); color:var(--text); position:relative; font-size:18px; }
+    .settings-notification-button.is-enabled { color:var(--green); background:rgba(52,199,89,.13); }
+    .settings-notification-state { position:absolute; right:-3px; bottom:-3px; width:18px; height:18px; display:flex; align-items:center; justify-content:center; border:2px solid var(--bg); border-radius:50%; background:var(--red); color:#fff; font-size:12px; font-weight:900; line-height:1; }
+    .settings-notification-button.is-enabled .settings-notification-state { background:var(--green); }
+    .face-id-icon { position:relative; display:inline-block; width:20px; height:20px; border:2px solid currentColor; border-radius:6px; }
+    .face-id-icon::before { content:"•"; position:absolute; left:50%; top:1px; transform:translateX(-50%); font-size:12px; line-height:11px; }
+    .face-id-icon::after { content:"⌣"; position:absolute; left:50%; bottom:-4px; transform:translateX(-50%); font-size:17px; line-height:12px; font-weight:700; }
+    .ios-switch-row { display:flex !important; align-items:center; justify-content:space-between; gap:12px; margin:0 !important; min-height:40px; color:var(--text) !important; font-size:14px; font-weight:600; }
+    .ios-switch { position:relative; display:inline-flex; flex:0 0 auto; width:51px; height:31px; cursor:pointer; }
+    .ios-switch input { position:absolute; opacity:0; width:1px !important; min-height:1px !important; }
+    .ios-switch-track { position:absolute; inset:0; border-radius:999px; background:#787880; transition:background .2s ease; }
+    .ios-switch-track::after { content:""; position:absolute; top:3px; left:3px; width:25px; height:25px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .2s ease; }
+    .ios-switch input:checked + .ios-switch-track { background:var(--green); }
+    .ios-switch input:checked + .ios-switch-track::after { transform:translateX(20px); }
+    .ios-switch input:focus-visible + .ios-switch-track { outline:2px solid var(--primary); outline-offset:2px; }
 
     .msg-box { font-size: 13px; margin-top: 10px; padding: 8px 12px; border-radius: 8px; display: none; }
     .msg-box.success-msg { background: rgba(52, 199, 89, 0.15); color: var(--green); display: block; }
@@ -418,15 +550,21 @@
     .members-checklist { max-height: 140px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: var(--surface-subtle); margin-top: 6px; }
     .members-checklist label { margin: 4px 0; font-weight: normal; color: var(--text); display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
-    .type-switcher { display: flex; gap: 10px; margin-bottom: 12px; background: var(--control-bg); padding: 4px; border-radius: 10px; }
-    .type-switcher label { flex: 1; text-align: center; margin: 0; padding: 6px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
+    .type-switcher { display: flex; gap:0; position:relative; margin-bottom: 12px; background: var(--control-bg); padding: 4px; border-radius: 10px; }
+    .type-switcher::before { content:""; position:absolute; inset:4px auto 4px 4px; width:calc((100% - 8px) / 3); border-radius:8px; background:var(--card-solid); box-shadow:0 2px 6px rgba(0,0,0,.08); transform:translateX(0); transition:transform .3s cubic-bezier(.2,.85,.25,1.1); }
+    .type-switcher[data-active="personal"]::before { transform:translateX(100%); }
+    .type-switcher[data-active="cash"]::before { transform:translateX(200%); }
+    .type-switcher label { position:relative; z-index:1; flex: 1; text-align: center; margin: 0; padding: 6px 3px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); transition:color .2s ease; }
     .type-switcher input { display: none; }
     .type-switcher input:checked + span { color: var(--text); font-weight: 700; }
-    .type-switcher label:has(input:checked) { background: var(--card-solid); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .type-switcher label:has(input:checked) { background:transparent; box-shadow:none; }
+    #accountForm.is-type-switching > div { animation:account-type-content-in .2s ease-out both; }
+    @keyframes account-type-content-in { from { opacity:.3; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
 
     @media(max-width: 768px) {
       .wrap { padding: max(16px, env(safe-area-inset-top)) 12px max(40px, env(safe-area-inset-bottom)); }
       .grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+      .cash-dashboard-card { grid-column:1 / -1; }
       .card { min-width: 0; padding: 14px; }
       .metric { font-size: clamp(18px, 5.5vw, 23px); }
       .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -475,15 +613,25 @@
 
 <!-- Loading Screen -->
 <div id="loadingScreen" class="loading-overlay">
+  <div class="loading-brand">
+    <img class="loading-logo" src="paynote-logo.png" alt="PayNote">
+    <div class="loading-name">PayNote</div>
+  </div>
   <div class="spinner"></div>
-  <div class="loading-text">Gegevens laden...</div>
 </div>
 
 <!-- Auth Screen -->
 <div id="authScreen" class="auth-overlay" style="display: none;">
   <div class="auth-card">
-    <h2 id="authTitle">Welkom terug</h2>
-    <p id="authSub">Log in om verder te gaan naar Terugbetalingen.</p>
+    <div class="auth-brand">
+      <img class="auth-brand-logo" src="paynote-logo.png" alt="PayNote logo">
+      <div class="auth-brand-name">PayNote</div>
+      <div class="auth-brand-tagline">Spend together. Settle smarter.</div>
+    </div>
+    <div class="auth-welcome">
+      <h2 id="authTitle">Welkom terug</h2>
+      <p id="authSub">Log in om verder te gaan naar PayNote.</p>
+    </div>
 
     <div id="authStatusMsg" class="msg-box"></div>
 
@@ -523,8 +671,8 @@
 <div id="appWrap" class="wrap" style="display: none;">
   <div class="top">
     <div>
-      <h1>💶 Terugbetalingen</h1>
-      <p class="sub">Houd eenvoudig bij wie nog geld moet terugbetalen.</p>
+      <h1 class="brand-title"><img class="brand-logo" src="paynote-logo.png" alt="PayNote logo">PayNote</h1>
+      <p class="sub">Spend together. Settle smarter.</p>
     </div>
     <div class="user-bar">
       <div class="user-info-box">
@@ -536,27 +684,29 @@
       </div>
 
       <div id="dropdownMenu" class="dropdown-menu">
-        <button class="dropdown-item" onclick="openModal('settingsModal')">⚙️ Instellingen</button>
-        <button class="dropdown-item danger-text" onclick="handleLogout()">🚪 Uitloggen</button>
+        <button class="dropdown-item" onclick="openModal('contactsModal')"><span>Contacten</span><span aria-hidden="true">👥</span></button>
+        <button class="dropdown-item" onclick="openModal('settingsModal')"><span>Instellingen</span><span aria-hidden="true">⚙️</span></button>
+        <button class="dropdown-item danger-text" onclick="handleLogout()"><span>Uitloggen</span><span aria-hidden="true">🚪</span></button>
       </div>
     </div>
   </div>
 
   <div class="grid">
-    <div class="card"><div class="label">Nog te ontvangen</div><div id="receive" class="metric positive">€0,00</div></div>
-    <div class="card"><div class="label">Nog te betalen</div><div id="pay" class="metric negative">€0,00</div></div>
-    <div class="card"><div class="label">In verwerking</div><div id="pendingMetric" class="metric warning">€0,00</div></div>
-    <div class="card"><div class="label">Openstaande kosten</div><div id="open" class="metric">0</div></div>
-    <div class="card"><div class="label cash-label"><span>Cashrekening</span><button class="cash-visibility" id="cashVisibilityBtn" type="button" onclick="toggleCashVisibility()" aria-label="Cashsaldo verbergen of tonen">👁</button></div><div id="cashBalance" class="metric">€0,00</div></div>
+    <div class="card expense-metric-card"><div class="label">Nog te ontvangen</div><div id="receive" class="metric positive">€0,00</div></div>
+    <div class="card expense-metric-card"><div class="label">Nog te betalen</div><div id="pay" class="metric negative">€0,00</div></div>
+    <div class="card expense-metric-card"><div class="label">In verwerking</div><div id="pendingMetric" class="metric warning">€0,00</div></div>
+    <div class="card expense-metric-card"><div class="label">Openstaande kosten</div><div id="open" class="metric">0</div></div>
+    <div id="cashDashboardCard" class="card cash-dashboard-card"><div class="label cash-label"><span id="cashBalanceLabel">Cashrekening</span><button class="cash-visibility" id="cashVisibilityBtn" type="button" onclick="toggleCashVisibility()" aria-label="Cashsaldo verbergen of tonen">👁</button></div><select id="cashAccountSelector" onchange="selectCashAccount(this.value)" aria-label="Cashrekening kiezen"></select><div id="cashBalance" class="metric">€0,00</div></div>
   </div>
 
   <div id="appStatusMsg" class="app-message" role="alert"></div>
   <div id="overdueExpensesNotice" class="overdue-notice" role="status"></div>
+  <div id="appToast" class="app-toast" role="status" aria-live="polite"><span class="app-toast-check">✓</span><span id="appToastText"></span></div>
 
   <div class="toolbar">
     <button id="addExpenseBtn" onclick="openModal('expenseModal')">＋ Nieuwe kost</button>
-    <button class="secondary" onclick="openModal('cashModal')">＋ Cash boeken</button>
-    <button id="addAccountBtn" class="secondary" style="display: none;" onclick="openModal('accountModal')">＋ Nieuwe rekening / persoon</button>
+    <button id="addCashBtn" class="secondary" onclick="openModal('cashModal')">＋ Cash boeken</button>
+    <button id="addAccountBtn" class="secondary" style="display: none;" onclick="openModal('accountModal')">⚙️ Accountbeheer</button>
     <button class="secondary" onclick="openModal('historyModal');renderHistory()">Historiek</button>
   </div>
 
@@ -568,8 +718,8 @@
       <div id="accounts" class="accounts-container"></div>
     </div>
 
-    <div class="card expenses-card">
-      <div class="tabs">
+    <div class="card expenses-card" id="activityCard">
+      <div class="tabs" id="expenseTabs" data-active="open">
         <button class="tab-btn active" id="tabOpen" onclick="switchTab('open')">Openstaande kosten</button>
         <button class="tab-btn" id="tabOutgoing" onclick="switchTab('outgoing')">Uitgaande kosten</button>
       </div>
@@ -578,7 +728,7 @@
         <div id="expenses" style="display:flex; flex-direction:column; flex:1;"></div>
       </div>
 
-      <div class="pagination">
+      <div class="pagination" id="expensePagination">
         <span class="page-info" id="pageInfo">Pagina 1 van 1</span>
         <div class="page-btn-group">
           <button class="secondary small" id="prevPage" onclick="changePage(-1)">Vorige</button>
@@ -589,19 +739,23 @@
   </div>
 </div>
 
-<!-- Modal: Nieuwe Rekening / Persoon -->
+<!-- Modal: Accountbeheer -->
 <div id="accountModal" class="modal" onclick="if(event.target===this)closeModal('accountModal')">
   <div class="modal-card small-modal">
-    <div class="modal-head"><h2 id="accountModalTitle">Nieuwe Rekening / Persoon</h2><button class="close" onclick="closeModal('accountModal')">×</button></div>
+    <div class="modal-head"><h2 id="accountModalTitle">Accountbeheer</h2><button class="close" onclick="closeModal('accountModal')">×</button></div>
     
     <div class="type-switcher">
       <label>
         <input type="radio" name="accountTypeToggle" value="shared" checked onchange="toggleAccountTypeUI()">
-        <span>Gezamenlijk</span>
+        <span>Kostenrekening</span>
       </label>
       <label>
         <input type="radio" name="accountTypeToggle" value="personal" onchange="toggleAccountTypeUI()">
         <span>Persoon</span>
+      </label>
+      <label>
+        <input type="radio" name="accountTypeToggle" value="cash" onchange="toggleAccountTypeUI()">
+        <span>Cashrekening</span>
       </label>
     </div>
 
@@ -626,17 +780,33 @@
       
       <button class="full" type="submit">Opslaan</button>
     </form>
+    <div class="settings-section">
+      <h3>Bestaande accounts beheren</h3>
+      <div id="accountManagementList" class="members-checklist"></div>
+    </div>
   </div>
 </div>
 
 <!-- Modal: Instellingen -->
 <div id="settingsModal" class="modal" onclick="if(event.target===this)closeModal('settingsModal')">
-  <div class="modal-card small-modal">
+  <div class="modal-card small-modal settings-modal-card">
     <div class="modal-head"><h2>⚙️ Instellingen</h2><button class="close" onclick="closeModal('settingsModal')">×</button></div>
     
     <div id="settingsStatusMsg" class="msg-box"></div>
+    <div class="settings-statusbar">
+      <button id="settingsNotificationButton" class="settings-notification-button" type="button" onclick="openModal('notificationModal')" aria-label="Meldingen beheren"><span>🔔</span><span id="settingsNotificationState" class="settings-notification-state">×</span></button>
+      <button id="settingsPasskeyButton" class="settings-notification-button" type="button" onclick="openModal('faceIdModal')" aria-label="Face ID en toestelbeveiliging"><span class="face-id-icon" aria-hidden="true"></span><span id="settingsPasskeyState" class="settings-notification-state">×</span></button>
+      <button id="settingsAdminButton" class="settings-notification-button" type="button" onclick="toggleAdminViewFromStatus()" aria-label="Adminweergave" style="display:none;"><span>⚙️</span><span id="settingsAdminState" class="settings-notification-state">×</span></button>
+    </div>
 
-    <div class="settings-section" style="border-top:none; padding-top:0;">
+    <button id="settingsCategoryBack" class="settings-category-back" type="button" style="display:none;" onclick="setSettingsCategory('overview')">‹ Alle instellingen</button>
+    <nav id="settingsCategoryNav" class="settings-category-nav" aria-label="Instellingencategorieën">
+      <button type="button" onclick="setSettingsCategory('display')">🎨 Weergave</button>
+      <button type="button" onclick="setSettingsCategory('security')">🔐 Beveiliging</button>
+      <button type="button" onclick="setSettingsCategory('profile')">👤 Profiel</button>
+    </nav>
+
+    <div id="settingsDisplay" data-settings-category="display" class="settings-section settings-category-section" style="border-top:none; padding-top:0;">
       <h3>Uiterlijk</h3>
       <label for="themePreference">Kleurmodus</label>
       <select id="themePreference" onchange="setThemePreference(this.value)">
@@ -648,22 +818,7 @@
       <button class="full secondary" type="button" onclick="saveThemePreference()">Uiterlijk opslaan</button>
     </div>
 
-    <div class="settings-section">
-      <h3>Meldingen</h3>
-      <p class="muted" style="font-size:13px; line-height:1.45;">Ontvang een melding wanneer een nieuwe kost voor jou of een rekening waarvan je lid bent wordt toegevoegd.</p>
-      <div id="notificationStatus" class="muted" style="font-size:12px; margin-bottom:10px;">Meldingen staan uit.</div>
-      <button id="notificationToggleBtn" class="full" type="button" onclick="enableExpenseNotifications()">Meldingen inschakelen</button>
-      <button id="notificationDisableBtn" class="full secondary" style="margin-top:8px;" type="button" onclick="disableExpenseNotifications()">Meldingen uitschakelen</button>
-    </div>
-
-    <div class="settings-section">
-      <h3>Face ID / toestelvergrendeling</h3>
-      <p class="muted" style="font-size:13px; line-height:1.45;">Gebruik Face ID op iPhone of de veilige toestelvergrendeling op andere apparaten om zonder wachtwoord in te loggen.</p>
-      <button id="passkeyRegisterBtn" class="full secondary" type="button" onclick="registerPasskey()">Face ID instellen</button>
-      <div id="passkeyStatus" class="muted" style="font-size:12px; margin-top:8px;"></div>
-    </div>
-
-    <div class="settings-section">
+    <div id="settingsProfile" data-settings-category="profile" class="settings-section settings-category-section">
       <h3>Profiel</h3>
       <label for="displayNameInput">Weergavenaam</label>
       <input id="displayNameInput" placeholder="Jouw weergavenaam">
@@ -677,7 +832,7 @@
       <button class="full" type="button" onclick="saveProfileSettings()">Profiel opslaan</button>
     </div>
 
-    <div class="settings-section">
+    <div id="settingsPassword" data-settings-category="security" class="settings-section settings-category-section">
       <h3>Wachtwoord wijzigen</h3>
       <label for="newPasswordInput">Nieuw wachtwoord</label>
       <input id="newPasswordInput" type="password" placeholder="Minimaal 6 tekens">
@@ -687,6 +842,27 @@
 
       <button class="full secondary" type="button" onclick="changePassword()">Wachtwoord bijwerken</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal: Meldingen -->
+<div id="notificationModal" class="modal" onclick="if(event.target===this)closeModal('notificationModal')">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><h2>🔔 Meldingen</h2><button class="close" onclick="closeModal('notificationModal')">×</button></div>
+    <p class="muted" style="font-size:14px; line-height:1.5;">Ontvang een melding wanneer een nieuwe kost voor jou of een rekening waarvan je lid bent wordt toegevoegd.</p>
+    <div id="notificationStatus" class="msg-box" style="display:block; margin:14px 0 0;"></div>
+    <button id="notificationToggleBtn" class="full" type="button" onclick="enableExpenseNotifications()">Meldingen inschakelen</button>
+    <button id="notificationDisableBtn" class="full secondary" style="margin-top:8px;" type="button" onclick="disableExpenseNotifications()">Meldingen uitschakelen</button>
+  </div>
+</div>
+
+<!-- Modal: Face ID -->
+<div id="faceIdModal" class="modal" onclick="if(event.target===this)closeModal('faceIdModal')">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><h2>Face ID / toestelbeveiliging</h2><button class="close" onclick="closeModal('faceIdModal')">×</button></div>
+    <p class="muted" style="font-size:14px; line-height:1.5;">Gebruik Face ID op iPhone of de beveiliging van je toestel om zonder wachtwoord in te loggen.</p>
+    <button id="passkeyRegisterBtn" class="full secondary" type="button" onclick="registerPasskey()">Face ID instellen</button>
+    <div id="passkeyStatus" class="muted" style="font-size:12px; margin-top:10px;"></div>
   </div>
 </div>
 
@@ -720,10 +896,13 @@
           <select id="payer" disabled required></select>
         </div>
         <div>
-          <label for="recipient">Voor</label>
-          <select id="recipient" required onchange="renderSplitPeople()"></select>
+          <label for="recipient">Contact</label>
+          <select id="recipient" onchange="selectContactRecipient()"></select>
         </div>
       </div>
+      <label for="recipientAccountNumber">Rekeningnummer</label>
+      <input id="recipientAccountNumber" required autocomplete="off" autocapitalize="characters" placeholder="Bijv. PN-000001" oninput="lookupRecipientAccountNumber()">
+      <div id="recipientLookup" class="recipient-lookup">Kies een contact of voer een rekeningnummer in.</div>
 
       <div style="margin-top:16px;">
         <button type="button" id="toggleSplitBtn" class="secondary full" onclick="toggleSplitSection()">⚙️ Verdeling aanpassen</button>
@@ -738,6 +917,25 @@
 
       <button class="full" type="submit">Kost toevoegen</button>
     </form>
+  </div>
+</div>
+
+<!-- Modal: Contacten -->
+<div id="contactsModal" class="modal" onclick="if(event.target===this)closeModal('contactsModal')">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><h2>👥 Contacten</h2><button class="close" onclick="closeModal('contactsModal')">×</button></div>
+    <p class="muted" style="font-size:14px; line-height:1.45; margin-top:0;">Bewaar namen en rekeningnummers zodat je ze snel kunt gebruiken bij een nieuwe kost.</p>
+    <form id="contactForm">
+      <label for="contactName">Naam</label>
+      <input id="contactName" required maxlength="80" placeholder="Bijv. Alex of Gezamenlijke rekening">
+      <label for="contactAccountNumber">Rekeningnummer</label>
+      <input id="contactAccountNumber" required maxlength="40" autocapitalize="characters" placeholder="Bijv. PN-000001">
+      <button class="full" type="submit">Contact toevoegen</button>
+    </form>
+    <div class="settings-section">
+      <h3>Jouw contacten</h3>
+      <div id="contactsList"></div>
+    </div>
   </div>
 </div>
 
@@ -760,6 +958,8 @@
   <div class="modal-card small-modal">
     <div class="modal-head"><h2>Cash boeken</h2><button class="close" onclick="closeModal('cashModal')">×</button></div>
     <form id="cashForm">
+      <label for="cashAccountInput">Cashrekening</label>
+      <select id="cashAccountInput" required></select>
       <label>Type boeking</label>
       <div class="cash-type-switch">
         <label><input type="radio" name="cashDirection" value="in" checked><span>＋ Inboeken</span></label>
@@ -776,6 +976,17 @@
   </div>
 </div>
 
+<div id="deleteAccountModal" class="modal" onclick="if(event.target===this)closeModal('deleteAccountModal')">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><h2>Verwijderen bevestigen</h2><button class="close" onclick="closeModal('deleteAccountModal')">×</button></div>
+    <p id="deleteAccountText" class="muted">Weet je zeker dat je dit wilt verwijderen?</p>
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+      <button class="secondary" type="button" onclick="closeModal('deleteAccountModal')">Annuleren</button>
+      <button class="danger" type="button" onclick="confirmDeleteManagedItem()">Verwijderen</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://spkbprqsclypdidoadrm.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_N0qp_InFiqyV8ycP61aVBQ_nasLzXBA";
@@ -783,8 +994,10 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { experimental: { passkey: true } }
 });
 
-let data = { people: [], peopleObjects: [], accounts: [], expenses: [], cashTransactions: [] };
+let data = { people: [], peopleObjects: [], accounts: [], cashAccounts: [], contacts: [], expenses: [], cashTransactions: [] };
 let selectedPerson = null;
+let selectedCashAccountId = null;
+let pendingManagedDeletion = null;
 let currentUserName = "";
 let currentUserId = "";
 let notificationsEnabled = false;
@@ -795,6 +1008,8 @@ let avatarUrl = "";
 let currentPage = 1;
 const itemsPerPage = 5;
 let userRole = 'user';
+let adminViewEnabled = true;
+let activeSettingsCategory = 'overview';
 let activeTab = 'open';
 let selectedExpenses = new Set();
 let isInitialLoad = true;
@@ -803,6 +1018,8 @@ let expensesRealtimeChannel = null;
 let cashRealtimeChannel = null;
 let passwordRecoveryActive = /(?:[#?].*\btype=recovery\b)/i.test(window.location.href);
 let realtimeRefreshTimer = null;
+let appToastTimer = null;
+let accountTypeAnimationTimer = null;
 let receiptPreviewUrl = "";
 let cashBalanceHidden = false;
 
@@ -882,6 +1099,26 @@ function updatePasskeyUI(message = "") {
   const supported = window.isSecureContext && "PublicKeyCredential" in window;
   if (button) button.disabled = !supported;
   if (status) status.textContent = message || (supported ? "Face ID werkt via een passkey en de beveiliging van je toestel." : "Face ID/passkeys vereisen een recente browser en een beveiligde verbinding.");
+  updateSettingsQuickStatus();
+}
+
+function updateSettingsQuickStatus() {
+  const passkeySupported = window.isSecureContext && "PublicKeyCredential" in window;
+  const passkeyButton = document.getElementById('settingsPasskeyButton');
+  const passkeyState = document.getElementById('settingsPasskeyState');
+  if (passkeyButton) {
+    passkeyButton.classList.toggle('is-enabled', passkeySupported);
+    passkeyButton.setAttribute('aria-label', passkeySupported ? 'Face ID of toestelbeveiliging beheren' : 'Face ID is niet beschikbaar');
+  }
+  if (passkeyState) passkeyState.textContent = passkeySupported ? '✓' : '×';
+
+  const adminButton = document.getElementById('settingsAdminButton');
+  const adminState = document.getElementById('settingsAdminState');
+  if (adminButton) {
+    adminButton.style.display = userRole === 'admin' ? 'inline-flex' : 'none';
+    adminButton.classList.toggle('is-enabled', hasAdminView());
+  }
+  if (adminState) adminState.textContent = hasAdminView() ? '✓' : '×';
 }
 
 async function registerPasskey() {
@@ -917,8 +1154,19 @@ document.getElementById("date").value = today();
 document.getElementById("cashDate").value = today();
 try { cashBalanceHidden = localStorage.getItem("repayment-cash-hidden") === "yes"; } catch (_) {}
 
-function showLoading() { document.getElementById("loadingScreen").style.display = "flex"; }
-function hideLoading() { document.getElementById("loadingScreen").style.display = "none"; }
+let loadingHideTimer = null;
+function showLoading() {
+  const loader = document.getElementById("loadingScreen");
+  clearTimeout(loadingHideTimer);
+  loader.style.display = "flex";
+  requestAnimationFrame(() => loader.classList.remove('is-hiding'));
+}
+function hideLoading() {
+  const loader = document.getElementById("loadingScreen");
+  loader.classList.add('is-hiding');
+  clearTimeout(loadingHideTimer);
+  loadingHideTimer = setTimeout(() => { loader.style.display = "none"; }, 300);
+}
 
 function stopExpensesRealtime() {
   if (realtimeRefreshTimer) {
@@ -960,7 +1208,8 @@ function startExpensesRealtime() {
 
   cashRealtimeChannel = supabaseClient
     .channel(`cash-${currentUserId}`)
-    .on("postgres_changes", { event: "*", schema: "public", table: "cash_transactions", filter: `user_id=eq.${currentUserId}` }, scheduleRealtimeRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "cash_transactions" }, scheduleRealtimeRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "cash_accounts" }, scheduleRealtimeRefresh)
     .subscribe();
 }
 
@@ -972,8 +1221,18 @@ function updateNotificationSettingsUI() {
   const status = document.getElementById("notificationStatus");
   const enableBtn = document.getElementById("notificationToggleBtn");
   const disableBtn = document.getElementById("notificationDisableBtn");
-  if (!status || !enableBtn || !disableBtn) return;
   const permission = ("Notification" in window) ? Notification.permission : "unsupported";
+  const isEnabled = notificationsEnabled && permission === "granted";
+  const summary = document.getElementById("settingsNotificationSummary");
+  const iconState = document.getElementById("settingsNotificationState");
+  const iconButton = document.getElementById("settingsNotificationButton");
+  if (summary) summary.textContent = isEnabled ? "Ingeschakeld" : permission === "denied" ? "Geblokkeerd in browser" : "Uitgeschakeld";
+  if (iconState) iconState.textContent = isEnabled ? "✓" : "×";
+  if (iconButton) {
+    iconButton.classList.toggle("is-enabled", isEnabled);
+    iconButton.setAttribute("aria-label", isEnabled ? "Meldingen zijn ingeschakeld" : "Meldingen beheren");
+  }
+  if (!status || !enableBtn || !disableBtn) return;
   status.textContent = notificationsEnabled
     ? (permission === "granted" ? "Meldingen zijn ingeschakeld op dit apparaat." : permission === "denied" ? "Meldingen zijn geblokkeerd in je browserinstellingen." : "Meldingen zijn nog niet beschikbaar in deze browser.")
     : "Meldingen staan uit.";
@@ -1025,7 +1284,7 @@ async function notifyForNewExpense(expense) {
   const body = `${expense.description || "Nieuwe kost"} · ${euro(expense.amount)}`;
   try {
     const registration = appServiceWorkerRegistration || await navigator.serviceWorker.ready;
-    await registration.showNotification(title, { body, icon: "./icon-512.png", badge: "./favicon.ico", tag: `expense-${expense.id}` });
+    await registration.showNotification(title, { body, icon: "./paynote-logo.png", badge: "./favicon.ico", tag: `expense-${expense.id}` });
   } catch (err) { console.warn("Kon melding voor nieuwe kost niet tonen:", err); }
 }
 
@@ -1143,14 +1402,17 @@ document.getElementById("authForm").addEventListener("submit", async (e) => {
     const password = document.getElementById("authPassword").value;
 
     submitBtn.textContent = "Inloggen...";
+    showLoading();
     const { data: authData, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
     if (error) {
+      hideLoading();
       showAuthMsg("Inloggen mislukt: " + error.message, true);
     } else if (authData.session) {
       await initSession(authData.session);
     }
   } catch (err) {
+    hideLoading();
     showAuthMsg("Er is een onverwachte fout opgetreden: " + err.message, true);
   } finally {
     submitBtn.disabled = false;
@@ -1169,13 +1431,23 @@ async function handleLogout() {
   document.getElementById("authForm").reset();
 }
 
+let tabSwitchAnimationTimer = null;
+
 function switchTab(tab) {
+  if (activeTab === tab) return;
   activeTab = tab;
   document.getElementById("tabOpen").classList.toggle("active", tab === 'open');
   document.getElementById("tabOutgoing").classList.toggle("active", tab === 'outgoing');
+  document.getElementById("expenseTabs").dataset.active = tab;
   currentPage = 1;
   selectedExpenses.clear();
   renderExpenses();
+  const card = document.getElementById('activityCard');
+  card.classList.remove('is-tab-switching');
+  void card.offsetWidth;
+  card.classList.add('is-tab-switching');
+  clearTimeout(tabSwitchAnimationTimer);
+  tabSwitchAnimationTimer = setTimeout(() => card.classList.remove('is-tab-switching'), 260);
 }
 
 function showMsg(text, isError = false) {
@@ -1189,6 +1461,22 @@ function showAppError(action, error) {
   const detail = error?.message || "Onbekende fout.";
   box.textContent = `${action} is niet gelukt. ${detail}`;
   box.className = "app-message error-msg";
+}
+
+function showSuccessToast(text) {
+  const toast = document.getElementById('appToast');
+  const label = document.getElementById('appToastText');
+  if (!toast || !label) return;
+  label.textContent = text;
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  clearTimeout(appToastTimer);
+  appToastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+function emptyState(icon, title, copy) {
+  return `<div class="empty-state"><div class="empty-state-icon">${icon}</div><div class="empty-state-title">${title}</div><div class="empty-state-copy">${copy}</div></div>`;
 }
 
 function throwIfSupabaseError(result) {
@@ -1422,9 +1710,60 @@ function applyRolePermissions() {
   if (accountsCard) accountsCard.style.display = "block";
   if (mainLayout && window.innerWidth > 768) mainLayout.style.gridTemplateColumns = "340px 1fr";
   
-  if (addAccountBtn) {
-    addAccountBtn.style.display = (userRole === 'admin') ? 'inline-flex' : 'none';
+  if (addAccountBtn) addAccountBtn.style.display = hasAdminView() ? 'inline-flex' : 'none';
+  updateAdminViewUI();
+}
+
+function hasAdminView() {
+  return userRole === 'admin' && adminViewEnabled;
+}
+
+function updateAdminViewUI() {
+  const section = document.getElementById('adminViewSettings');
+  const toggle = document.getElementById('adminViewToggle');
+  const navButton = document.getElementById('adminCategoryButton');
+  if (section) section.style.display = 'none';
+  if (navButton) navButton.style.display = userRole === 'admin' ? '' : 'none';
+  if (toggle) toggle.checked = adminViewEnabled;
+  updateSettingsQuickStatus();
+}
+
+async function setAdminView(enabled) {
+  adminViewEnabled = Boolean(enabled);
+  if (!adminViewEnabled) {
+    selectedCashAccountId = null;
+    selectedPerson = currentUserName;
   }
+  applyRolePermissions();
+  render();
+  try {
+    const { error } = await supabaseClient.auth.updateUser({ data: { admin_view_enabled: adminViewEnabled } });
+    if (error) throw error;
+    showMsg(adminViewEnabled ? 'Adminweergave ingeschakeld.' : 'Adminweergave uitgeschakeld.');
+  } catch (err) {
+    showMsg('De voorkeur kon niet worden opgeslagen: ' + err.message, true);
+  }
+}
+
+function toggleAdminViewFromStatus() {
+  if (userRole !== 'admin') return;
+  setAdminView(!adminViewEnabled);
+}
+
+function setSettingsCategory(category) {
+  activeSettingsCategory = category;
+  const nav = document.getElementById('settingsCategoryNav');
+  const back = document.getElementById('settingsCategoryBack');
+  const title = document.querySelector('#settingsModal .modal-head h2');
+  const labels = { display: 'Weergave', security: 'Beveiliging', profile: 'Profiel' };
+  if (nav) nav.style.display = category === 'overview' ? 'grid' : 'none';
+  if (back) back.style.display = category === 'overview' ? 'none' : 'inline-flex';
+  if (title) title.textContent = category === 'overview' ? '⚙️ Instellingen' : labels[category] || 'Instellingen';
+  document.querySelectorAll('.settings-category-section').forEach(section => {
+    const isAdminSection = section.dataset.settingsCategory === 'admin';
+    const visible = category !== 'overview' && section.dataset.settingsCategory === category && (!isAdminSection || userRole === 'admin');
+    section.style.display = visible ? 'block' : 'none';
+  });
 }
 
 function calculateMonthBalance(targetPerson, monthKey) {
@@ -1441,17 +1780,24 @@ function calculateMonthBalance(targetPerson, monthKey) {
       }
     });
   });
-  if (targetPerson === currentUserName) {
-    data.cashTransactions.forEach(transaction => {
-      if (monthKeyFromStoredDate(transaction.transaction_date) === monthKey) {
-        balance += Number(transaction.amount) || 0;
-      }
-    });
-  }
   return balance;
 }
 
 function updateHeaderUserDisplay() {
+  const cashAccount = activeCashAccount();
+  if (cashAccount) {
+    const balance = cashTransactionsForAccount(cashAccount.id).reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+    document.getElementById("userNameDisplay").textContent = cashAccount.name;
+    const balanceEl = document.getElementById("userPrevMonthBalance");
+    balanceEl.textContent = `Cashsaldo: ${euro(balance)}`;
+    balanceEl.style.color = balance >= 0 ? "var(--green)" : "var(--red)";
+    const btn = document.getElementById("avatarBtn");
+    const initials = document.getElementById("avatarInitials");
+    btn.style.backgroundImage = "none";
+    initials.textContent = "€";
+    initials.style.display = "inline";
+    return;
+  }
   const activeName = selectedPerson ? selectedPerson : currentUserName;
   
   const personObj = data.peopleObjects.find(p => p.name === activeName);
@@ -1493,20 +1839,33 @@ function updateHeaderUserDisplay() {
 async function loadData(isInitial = false) {
   if (isInitial) showLoading();
   try {
-    const { data: peopleData, error: peopleError } = await supabaseClient.from('people').select('*').order('name');
-    const { data: accountsData, error: accountsError } = await supabaseClient.from('accounts').select('*');
-    const { data: expensesData, error: expensesError } = await supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
-    const { data: cashData, error: cashError } = await supabaseClient.from('cash_transactions').select('*').eq('user_id', currentUserId).order('transaction_date', { ascending: false }).order('created_at', { ascending: false });
-    throwIfSupabaseError({ error: peopleError || accountsError || expensesError || cashError });
+    const [peopleResult, accountsResult, expensesResult, cashAccountsResult, contactsResult] = await Promise.all([
+      supabaseClient.from('people').select('*').order('name'),
+      supabaseClient.from('accounts').select('*'),
+      supabaseClient.from('expenses').select('*').order('created_at', { ascending: false }),
+      supabaseClient.from('cash_accounts').select('*').order('name'),
+      supabaseClient.from('contacts').select('*').order('name')
+    ]);
+    const cashAccountIds = (cashAccountsResult.data || []).map(account => account.id);
+    const cashResult = cashAccountIds.length
+      ? await supabaseClient.from('cash_transactions').select('*').in('cash_account_id', cashAccountIds).order('transaction_date', { ascending: false }).order('created_at', { ascending: false })
+      : { data: [], error: null };
+    throwIfSupabaseError({ error: peopleResult.error || accountsResult.error || expensesResult.error || cashAccountsResult.error || contactsResult.error || cashResult.error });
 
-    data.peopleObjects = peopleData || [];
+    data.peopleObjects = peopleResult.data || [];
     data.people = data.peopleObjects.map(p => p.name);
-    data.accounts = accountsData || [];
-    data.expenses = expensesData || [];
-    data.cashTransactions = cashData || [];
+    data.accounts = accountsResult.data || [];
+    data.cashAccounts = cashAccountsResult.data || [];
+    data.contacts = contactsResult.data || [];
+    data.expenses = expensesResult.data || [];
+    data.cashTransactions = cashResult.data || [];
     selectedExpenses.clear();
 
     if (!selectedPerson) {
+      selectedPerson = currentUserName;
+    }
+    if (selectedCashAccountId && !data.cashAccounts.some(account => account.id === selectedCashAccountId)) {
+      selectedCashAccountId = null;
       selectedPerson = currentUserName;
     }
 
@@ -1522,6 +1881,7 @@ async function loadData(isInitial = false) {
 function renderAccounts() {
   const container = document.getElementById("accounts");
   const checklist = document.getElementById("accountMembersChecklist");
+  const managementList = document.getElementById("accountManagementList");
   if (!container) return;
 
   if (checklist) {
@@ -1535,6 +1895,8 @@ function renderAccounts() {
 
   let allAccounts = data.peopleObjects.map(p => ({
     name: p.name,
+    accountNumber: p.account_number || '',
+    kind: 'person',
     isShared: false,
     members: [p.name],
     isAdmin: p.role === 'admin'
@@ -1543,44 +1905,111 @@ function renderAccounts() {
   data.accounts.forEach(acc => {
     allAccounts.push({
       name: acc.name,
+      accountNumber: acc.account_number || '',
+      kind: 'expense',
       isShared: true,
       members: acc.members || [],
       isAdmin: false
     });
   });
 
-  const isAdmin = userRole === 'admin';
+  data.cashAccounts.forEach(acc => {
+    allAccounts.push({
+      id: acc.id,
+      name: acc.name,
+      accountNumber: '',
+      kind: 'cash',
+      isShared: (acc.members || []).length > 1,
+      members: acc.members || [],
+      isAdmin: false
+    });
+  });
+
+  const isAdmin = hasAdminView();
   const visibleAccounts = allAccounts.filter(acc => {
     if (isAdmin) return true;
     return acc.members.includes(currentUserName);
   });
 
   if (visibleAccounts.length === 0) {
-    container.innerHTML = `<div class="empty">Geen rekeningen gevonden.</div>`;
+    container.innerHTML = emptyState('👛', 'Nog geen rekeningen', 'Maak een rekening aan om kosten of cash bij te houden.');
     return;
   }
 
   container.innerHTML = visibleAccounts.map(acc => {
-    const isSelected = selectedPerson === acc.name;
+    const isSelected = acc.kind === 'cash' ? selectedCashAccountId === acc.id : selectedPerson === acc.name && !selectedCashAccountId;
     const nameWithStar = acc.name + (acc.isAdmin ? ' ⭐' : '');
-    
-    const badgeHtml = acc.isShared 
-      ? `<span class="pill shared">Gezamenlijk (${acc.members.length})</span>` 
-      : `<span class="pill">Persoonlijk</span>`;
+    const icon = acc.kind === 'cash' ? '💶' : acc.isShared ? '👥' : '👤';
+    const iconClass = acc.kind === 'cash' ? 'cash' : acc.isShared ? 'shared' : '';
+    const badgeHtml = acc.kind === 'cash'
+      ? `<span class="pill shared">Cash${acc.isShared ? ` (${acc.members.length})` : ''}</span>`
+      : acc.isShared
+        ? `<span class="pill shared">Gezamenlijk (${acc.members.length})</span>`
+        : `<span class="pill">Persoonlijk</span>`;
+    const action = acc.kind === 'cash' ? `selectCashAccount('${esc(acc.id)}')` : `selectPerson('${esc(acc.name)}')`;
     
     return `
-      <div 
-        onclick="selectPerson('${esc(acc.name)}')" 
-        style="padding: 10px 12px; margin-bottom: 6px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: ${isSelected ? 'rgba(0,122,255,0.1)' : 'var(--card-solid)'}; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--line)'};"
-      >
-        <span style="font-weight: 600;">${esc(nameWithStar)}</span>
+      <button type="button" class="account-item ${isSelected ? 'selected' : ''}" onclick="${action}">
+        <span class="account-icon ${iconClass}" aria-hidden="true">${icon}</span>
+        <span class="account-name"><span class="account-name-title">${esc(nameWithStar)}</span>${acc.accountNumber ? `<span class="account-number">${esc(acc.accountNumber)}</span>` : ''}</span>
         ${badgeHtml}
-      </div>
+      </button>
     `;
   }).join('');
+
+  if (managementList) {
+    if (!hasAdminView()) {
+      managementList.innerHTML = '';
+    } else {
+      const people = data.peopleObjects.map(person => ({ type: 'person', id: person.id, name: person.name, detail: `${person.email || 'Persoon'} · ${person.account_number || 'Nog geen rekeningnummer'}` }));
+      const expenseAccounts = data.accounts.map(account => ({ type: 'expense', id: account.id, name: account.name, detail: `Kostenrekening · ${account.account_number || 'Nog geen rekeningnummer'} · ${(account.members || []).length} leden` }));
+      const cashAccounts = data.cashAccounts.map(account => ({ type: 'cash', id: account.id, name: account.name, detail: `Cashrekening · ${(account.members || []).length} leden` }));
+      const managed = [...people, ...expenseAccounts, ...cashAccounts];
+      managementList.innerHTML = managed.length ? managed.map(item => `
+        <div class="management-row"><div><b>${esc(item.name)}</b><div class="management-meta">${esc(item.detail || (item.type === 'person' ? 'Persoon' : ''))}</div></div><button class="small danger" type="button" onclick="requestDeleteManagedItem('${item.type}','${esc(item.id)}','${esc(item.name)}')">Verwijderen</button></div>
+      `).join('') : '<div class="empty">Geen accounts of personen.</div>';
+    }
+  }
+}
+
+function renderContacts() {
+  const list = document.getElementById('contactsList');
+  if (!list) return;
+  const contacts = [...(data.contacts || [])].sort((a, b) => String(a.name).localeCompare(String(b.name), 'nl'));
+  list.innerHTML = contacts.length ? contacts.map(contact => `
+    <div class="contact-row">
+      <div><div class="contact-name">${esc(contact.name)}</div><div class="account-number">${esc(normalizeAccountNumber(contact.account_number))}</div></div>
+      <button class="small danger" type="button" onclick="deleteContact('${esc(contact.id)}')">Verwijderen</button>
+    </div>
+  `).join('') : emptyState('👥', 'Nog geen contacten', 'Voeg een naam en rekeningnummer toe om ze snel te gebruiken bij een kost.');
+}
+
+async function deleteContact(id) {
+  const name = (data.contacts || []).find(contact => contact.id === id)?.name || 'dit contact';
+  if (!confirm(`Contact ${name} verwijderen?`)) return;
+  try {
+    throwIfSupabaseError(await supabaseClient.from('contacts').delete().eq('id', id));
+    await loadData(false);
+    renderContacts();
+    showSuccessToast('Contact verwijderd');
+  } catch (err) {
+    showAppError('Verwijderen van het contact', err);
+  }
+}
+
+let accountSwitchAnimationTimer = null;
+
+function animateAccountSwitch() {
+  const app = document.getElementById('appWrap');
+  app.classList.remove('is-account-switching');
+  void app.offsetWidth;
+  app.classList.add('is-account-switching');
+  clearTimeout(accountSwitchAnimationTimer);
+  accountSwitchAnimationTimer = setTimeout(() => app.classList.remove('is-account-switching'), 300);
 }
 
 function selectPerson(name) {
+  selectedCashAccountId = null;
   if (selectedPerson === name) {
     selectedPerson = currentUserName;
   } else {
@@ -1589,6 +2018,25 @@ function selectPerson(name) {
   selectedExpenses.clear();
   currentPage = 1;
   render();
+  animateAccountSwitch();
+}
+
+function activeCashAccount() {
+  return data.cashAccounts.find(account => account.id === selectedCashAccountId) || null;
+}
+
+function isCashView() {
+  return Boolean(activeCashAccount());
+}
+
+function selectCashAccount(id) {
+  if (!id) return;
+  selectedCashAccountId = id;
+  selectedPerson = null;
+  selectedExpenses.clear();
+  currentPage = 1;
+  render();
+  animateAccountSwitch();
 }
 
 function render() {
@@ -1598,6 +2046,8 @@ function render() {
   let openCount = 0;
 
   const targetPerson = selectedPerson ? selectedPerson : currentUserName;
+  const cashView = isCashView();
+  document.getElementById("appWrap").classList.toggle("cash-view", cashView);
 
   data.expenses.forEach(e => {
     (e.splits || []).forEach(s => {
@@ -1628,39 +2078,93 @@ function render() {
   document.getElementById("pay").textContent = euro(toPay);
   document.getElementById("pendingMetric").textContent = euro(inProcessing);
   document.getElementById("open").textContent = openCount;
-  const cashBalance = data.cashTransactions.reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
-  document.getElementById("cashBalance").textContent = euro(cashBalance);
-  document.getElementById("cashBalance").className = `metric ${cashBalance > 0 ? 'positive' : cashBalance < 0 ? 'negative' : ''}`;
-  updateCashVisibility();
+  renderCashDashboard();
+
+  const addExpenseBtn = document.getElementById("addExpenseBtn");
+  const addCashBtn = document.getElementById("addCashBtn");
+  const expenseTabs = document.getElementById("expenseTabs");
+  const expensePagination = document.getElementById("expensePagination");
+  if (addExpenseBtn) addExpenseBtn.style.display = cashView ? 'none' : 'inline-flex';
+  if (addCashBtn) addCashBtn.style.display = cashView ? 'inline-flex' : 'none';
+  if (expenseTabs) expenseTabs.style.display = cashView ? 'none' : 'flex';
+  if (expensePagination) expensePagination.style.display = cashView ? 'none' : 'flex';
+
+  if (cashView) {
+    updateHeaderUserDisplay();
+    renderAccounts();
+    renderCashLedger();
+    return;
+  }
 
   const payer = document.getElementById("payer");
   payer.innerHTML = `<option value="${esc(currentUserName)}">${esc(currentUserName)}</option>`;
   payer.disabled = true;
 
   const recipientSelect = document.getElementById("recipient");
-  
-  let recipientOptionsHtml = '<optgroup label="Persoonlijke Rekeningen">';
-  data.people.filter(p => p !== currentUserName).forEach(p => {
-    recipientOptionsHtml += `<option value="${esc(p)}">${esc(p)}</option>`;
-  });
-  recipientOptionsHtml += '</optgroup>';
-
-  if (data.accounts.length > 0) {
-    recipientOptionsHtml += '<optgroup label="Gezamenlijke Rekeningen">';
-    data.accounts.forEach(acc => {
-      if (acc.name !== currentUserName) {
-        recipientOptionsHtml += `<option value="${esc(acc.name)}">${esc(acc.name)}</option>`;
-      }
-    });
-    recipientOptionsHtml += '</optgroup>';
-  }
-
-  recipientSelect.innerHTML = recipientOptionsHtml;
+  const previousRecipient = recipientSelect.value;
+  recipientSelect.innerHTML = `<option value="">Kies een contact</option>` + data.contacts
+    .map(contact => `<option value="${esc(contact.account_number)}">${esc(contact.name)}</option>`)
+    .join('');
+  if ([...recipientSelect.options].some(option => option.value === previousRecipient)) recipientSelect.value = previousRecipient;
 
   updateHeaderUserDisplay();
   renderOverdueExpensesNotice(targetPerson);
   renderAccounts();
   renderExpenses();
+}
+
+function cashTransactionsForAccount(accountId) {
+  return data.cashTransactions.filter(transaction => transaction.cash_account_id === accountId);
+}
+
+function renderCashDashboard() {
+  const card = document.getElementById("cashDashboardCard");
+  const selector = document.getElementById("cashAccountSelector");
+  const balanceEl = document.getElementById("cashBalance");
+  const label = document.getElementById("cashBalanceLabel");
+  const selectedCash = activeCashAccount();
+  const targetPerson = selectedPerson || currentUserName;
+  // In de gewone persoonsweergave tonen we uitsluitend cashrekeningen waarvoor die persoon lid is.
+  // Bij een geselecteerde kostenrekening is cash niet van toepassing en blijft het vak verborgen.
+  const accounts = selectedCash
+    ? [selectedCash]
+    : data.people.includes(targetPerson)
+      ? (data.cashAccounts || []).filter(account => (account.members || []).includes(targetPerson))
+      : [];
+  if (!card || !selector || !balanceEl) return;
+  card.style.display = accounts.length ? '' : 'none';
+  if (!accounts.length) return;
+  const selected = selectedCash || accounts[0];
+  selector.innerHTML = accounts.map(account => `<option value="${esc(account.id)}">${esc(account.name)}</option>`).join('');
+  selector.value = selected.id;
+  selector.style.display = accounts.length > 1 ? 'block' : 'none';
+  if (label) label.textContent = accounts.length > 1 ? 'Cashrekening' : selected.name;
+  const balance = cashTransactionsForAccount(selected.id).reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+  balanceEl.textContent = euro(balance);
+  balanceEl.className = `metric ${balance > 0 ? 'positive' : balance < 0 ? 'negative' : ''}`;
+  updateCashVisibility();
+
+  const input = document.getElementById("cashAccountInput");
+  if (input) {
+    input.innerHTML = accounts.map(account => `<option value="${esc(account.id)}">${esc(account.name)}</option>`).join('');
+    input.value = selected.id;
+  }
+}
+
+function renderCashLedger() {
+  const account = activeCashAccount();
+  const container = document.getElementById("expenses");
+  if (!account || !container) return;
+  const rows = cashTransactionsForAccount(account.id).sort((a, b) => `${b.transaction_date}${b.created_at || ''}`.localeCompare(`${a.transaction_date}${a.created_at || ''}`));
+  const heading = `<div class="cash-ledger-heading"><div><div class="cash-ledger-title">Cashhistoriek</div><div class="cash-ledger-subtitle">${esc(account.name)}</div></div><span class="pill">${rows.length} ${rows.length === 1 ? 'boeking' : 'boekingen'}</span></div>`;
+  if (!rows.length) {
+    container.innerHTML = heading + emptyState('💶', 'Nog geen cashboekingen', `Boek je eerste in- of uitgave in ${esc(account.name)}.`);
+    return;
+  }
+  container.innerHTML = heading + `<div class="cash-ledger-list">` + rows.map(transaction => {
+    const incoming = Number(transaction.amount) >= 0;
+    return `<div class="history-card history-item-single"><div class="history-row"><div><div class="history-person">${incoming ? 'Inboeking' : 'Uitboeking'}</div><div class="history-date">${esc(transaction.transaction_date)}</div></div><span class="history-amount ${incoming ? 'incoming' : 'outgoing'}">${incoming ? '+' : '-'}${euro(Math.abs(Number(transaction.amount)))}</span></div><div class="history-description">${esc(transaction.description)}</div></div>`;
+  }).join('') + `</div>`;
 }
 
 // 3-staps cyclus logica op de kolommen
@@ -1762,7 +2266,10 @@ function renderExpenses() {
   document.getElementById("nextPage").disabled = currentPage >= totalPages;
   
   if (!rows.length) {
-    document.getElementById("expenses").innerHTML = `<div class="empty">Geen kosten gevonden voor dit tabblad.</div>`;
+    const isOpenTab = activeTab === 'open';
+    document.getElementById("expenses").innerHTML = isOpenTab
+      ? emptyState('✓', 'Alles is in balans', 'Je hebt momenteel geen openstaande kosten.')
+      : emptyState('🧾', 'Nog geen uitgaande kosten', 'Kosten die je hebt voorgeschoten verschijnen hier.');
     selectedExpenses.clear();
     return;
   }
@@ -1937,6 +2444,7 @@ async function deleteSelectedExpenses() {
 
     selectedExpenses.clear();
     await loadData(false);
+    showSuccessToast(`${deletableRows.length} ${deletableRows.length === 1 ? 'kost verwijderd' : 'kosten verwijderd'}`);
   } catch (err) {
     showAppError("Verwijderen van de kost", err);
   } finally {
@@ -1988,9 +2496,19 @@ async function processGroupAction(actionType) {
   
   selectedExpenses.clear();
   await loadData(false);
+  showSuccessToast(actionType === 'pay' ? 'Betaling in verwerking' : 'Betaling bevestigd');
 }
 
 function renderHistory() {
+  if (isCashView()) {
+    const account = activeCashAccount();
+    const rows = cashTransactionsForAccount(account.id).sort((a, b) => String(b.transaction_date).localeCompare(String(a.transaction_date)));
+    document.getElementById("history").innerHTML = rows.length ? rows.map(transaction => {
+      const incoming = Number(transaction.amount) >= 0;
+      return `<div class="history-card history-item-single"><div class="history-row"><div><div class="history-person">${incoming ? 'Inboeking' : 'Uitboeking'}</div><div class="history-date">${esc(transaction.transaction_date)}</div></div><span class="history-amount ${incoming ? 'incoming' : 'outgoing'}">${incoming ? '+' : '-'}${euro(Math.abs(Number(transaction.amount)))}</span></div><div class="history-description">${esc(transaction.description)}</div></div>`;
+    }).join('') : emptyState('💶', 'Nog geen cashboekingen', 'Nieuwe cashboekingen verschijnen hier.');
+    return;
+  }
   const targetPerson = selectedPerson ? selectedPerson : currentUserName;
   
   const now = new Date();
@@ -2002,8 +2520,6 @@ function renderHistory() {
 
   const currentMonthPaidShares = [];
   const prevMonthPaidShares = [];
-  const currentCashTransactions = [];
-  const prevMonthCashTransactions = [];
 
   data.expenses.forEach(e => {
     (e.splits || []).forEach(s => {
@@ -2022,15 +2538,7 @@ function renderHistory() {
     });
   });
 
-  if (targetPerson === currentUserName) {
-    data.cashTransactions.forEach(transaction => {
-      const monthKey = monthKeyFromStoredDate(transaction.transaction_date);
-      if (monthKey === currentMonthKey) currentCashTransactions.push(transaction);
-      else if (monthKey === prevMonthKey) prevMonthCashTransactions.push(transaction);
-    });
-  }
-
-  if (!currentMonthPaidShares.length && !prevMonthPaidShares.length && !currentCashTransactions.length && !prevMonthCashTransactions.length) {
+  if (!currentMonthPaidShares.length && !prevMonthPaidShares.length) {
     document.getElementById("history").innerHTML = `<div class="empty">Nog geen betaalde kosten in de historiek voor ${esc(targetPerson)}.</div>`;
     return;
   }
@@ -2104,22 +2612,14 @@ function renderHistory() {
         `;
       }
     }).join("");
-  } else if (!currentCashTransactions.length) {
+  } else {
     html += `<div class="empty">Nog geen betalingen in de huidige maand.</div>`;
   }
 
-  if (currentCashTransactions.length) {
-    html += `<div class="history-section-label" style="margin-top:16px;">Cashrekening</div>`;
-    html += currentCashTransactions.sort((a, b) => String(b.transaction_date).localeCompare(String(a.transaction_date))).map(transaction => {
-      const incoming = Number(transaction.amount) >= 0;
-      return `<div class="history-card history-item-single"><div class="history-row"><div><div class="history-person">Cashrekening</div><div class="history-date">${esc(transaction.transaction_date)}</div></div><span class="history-amount ${incoming ? 'incoming' : 'outgoing'}">${incoming ? '+' : '-'}${euro(Math.abs(Number(transaction.amount)))}</span></div><div class="history-description">${esc(transaction.description)}</div></div>`;
-    }).join("");
-  }
-
-  if (prevMonthPaidShares.length || prevMonthCashTransactions.length) {
+  if (prevMonthPaidShares.length) {
     const prevMonthTotal = prevMonthPaidShares.reduce((total, { e, s }) => {
       return total + (e.payer === targetPerson ? Number(s.amount) : -Number(s.amount));
-    }, 0) + prevMonthCashTransactions.reduce((total, transaction) => total + (Number(transaction.amount) || 0), 0);
+    }, 0);
     const prevPrefix = prevMonthTotal >= 0 ? '+' : '-';
 
     html += `
@@ -2149,10 +2649,6 @@ function renderHistory() {
               </div>
             `;
           }).join('')}
-          ${prevMonthCashTransactions.map(transaction => {
-            const incoming = Number(transaction.amount) >= 0;
-            return `<div class="history-sub-item"><div><div><b>Cashrekening</b> <span class="muted">· ${esc(transaction.description)}</span></div><div class="history-date">${esc(transaction.transaction_date)}</div></div><span class="history-amount ${incoming ? 'incoming' : 'outgoing'}" style="font-size:14px;">${incoming ? '+' : '-'}${euro(Math.abs(Number(transaction.amount)))}</span></div>`;
-          }).join('')}
         </div>
       </details>
     `;
@@ -2162,22 +2658,54 @@ function renderHistory() {
 }
 
 function toggleAccountTypeUI() {
-  const isPersonal = document.querySelector('input[name="accountTypeToggle"]:checked').value === 'personal';
+  const type = document.querySelector('input[name="accountTypeToggle"]:checked').value;
+  const isPersonal = type === 'personal';
+  const typeSwitcher = document.querySelector('.type-switcher');
+  const form = document.getElementById('accountForm');
+  const typeChanged = form.dataset.accountType !== type;
+  typeSwitcher.dataset.active = type;
   document.getElementById('fieldAccountName').style.display = isPersonal ? 'none' : 'block';
   document.getElementById('fieldMembersChecklist').style.display = isPersonal ? 'none' : 'block';
   document.getElementById('fieldPersonEmail').style.display = isPersonal ? 'block' : 'none';
+  document.querySelector('label[for="accountName"]').textContent = type === 'cash' ? 'Naam cashrekening' : 'Rekeningnaam';
+  document.getElementById('accountName').placeholder = type === 'cash' ? 'Bijv. Huishoudkas, Vakantiekas' : 'Bijv. Gezamenlijk, Vakantie';
+  form.dataset.accountType = type;
+  if (typeChanged) {
+    form.classList.remove('is-type-switching');
+    void form.offsetWidth;
+    form.classList.add('is-type-switching');
+    clearTimeout(accountTypeAnimationTimer);
+    accountTypeAnimationTimer = setTimeout(() => form.classList.remove('is-type-switching'), 220);
+  }
 }
 
-function openModal(id) { 
-  document.getElementById(id).classList.add("open"); 
+const modalCloseTimers = new Map();
+
+function openModal(id) {
+  const modal = document.getElementById(id);
+  const timer = modalCloseTimers.get(id);
+  if (timer) {
+    clearTimeout(timer);
+    modalCloseTimers.delete(id);
+  }
+  modal.classList.remove("closing");
+  modal.classList.add("open"); 
   if(id === 'settingsModal') {
     const box = document.getElementById("settingsStatusMsg");
     box.className = "msg-box";
     box.style.display = "none";
+    setSettingsCategory('overview');
   }
+  if (id === 'notificationModal') updateNotificationSettingsUI();
+  if (id === 'faceIdModal') updatePasskeyUI();
+  if (id === 'contactsModal') renderContacts();
   if(id === 'accountModal') {
     document.querySelector('input[name="accountTypeToggle"][value="shared"]').checked = true;
     toggleAccountTypeUI();
+  }
+  if (id === 'cashModal') {
+    const account = activeCashAccount() || data.cashAccounts[0];
+    if (account) document.getElementById('cashAccountInput').value = account.id;
   }
   if(id === 'expenseModal') {
     const payerSelect = document.getElementById("payer");
@@ -2188,12 +2716,85 @@ function openModal(id) {
     const toggleBtn = document.getElementById("toggleSplitBtn");
     splitSec.style.display = "none";
     toggleBtn.textContent = "⚙️ Verdeling aanpassen";
-    
+    document.getElementById('recipient').value = '';
+    document.getElementById('recipientAccountNumber').value = '';
+    document.getElementById('recipientLookup').className = 'recipient-lookup';
+    document.getElementById('recipientLookup').textContent = 'Kies een contact of voer een rekeningnummer in.';
     renderSplitPeople();
   }
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+function closeModal(id, swipeOffset = 0) {
+  const modal = document.getElementById(id);
+  if (!modal || modal.classList.contains('closing') || !modal.classList.contains('open')) return;
+  const card = modal.querySelector('.modal-card');
+  const offset = Math.max(0, Math.min(Number(swipeOffset) || 0, 180));
+  card.classList.remove('is-swiping', 'is-snapping-back');
+  card.style.removeProperty('--swipe-offset');
+  card.style.setProperty('--dismiss-offset', `${offset}px`);
+  modal.classList.remove('open');
+  modal.classList.add('closing');
+  const timer = setTimeout(() => {
+    modal.classList.remove('closing');
+    card.style.removeProperty('--dismiss-offset');
+    modalCloseTimers.delete(id);
+  }, 230);
+  modalCloseTimers.set(id, timer);
+}
+
+function enableModalSwipeToClose() {
+  document.querySelectorAll('.modal').forEach(modal => {
+    const card = modal.querySelector('.modal-card');
+    if (!card) return;
+    let gesture = null;
+
+    card.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse' || event.target.closest('button, input, select, textarea, a')) return;
+      const cardTop = card.getBoundingClientRect().top;
+      if (event.clientY - cardTop > 74) return;
+      gesture = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, offset: 0, active: false };
+      card.setPointerCapture?.(event.pointerId);
+    });
+
+    card.addEventListener('pointermove', event => {
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+      const deltaX = event.clientX - gesture.startX;
+      const deltaY = event.clientY - gesture.startY;
+      if (!gesture.active) {
+        if (deltaY < 0 || Math.abs(deltaX) > Math.abs(deltaY)) { gesture = null; return; }
+        if (deltaY < 8) return;
+        gesture.active = true;
+        card.classList.add('is-swiping');
+      }
+      gesture.offset = Math.min(deltaY, 180);
+      card.style.setProperty('--swipe-offset', `${gesture.offset}px`);
+      if (event.cancelable) event.preventDefault();
+    }, { passive: false });
+
+    const finishGesture = event => {
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+      const { active, offset } = gesture;
+      gesture = null;
+      if (card.hasPointerCapture?.(event.pointerId)) card.releasePointerCapture(event.pointerId);
+      if (!active) return;
+      card.classList.remove('is-swiping');
+      if (offset >= 80) {
+        closeModal(modal.id, offset);
+        return;
+      }
+      card.classList.add('is-snapping-back');
+      setTimeout(() => {
+        card.classList.remove('is-snapping-back');
+        card.style.removeProperty('--swipe-offset');
+      }, 210);
+    };
+
+    card.addEventListener('pointerup', finishGesture);
+    card.addEventListener('pointercancel', finishGesture);
+  });
+}
+
+enableModalSwipeToClose();
 
 function changePage(delta) {
   const rows = getFilteredRows();
@@ -2211,6 +2812,7 @@ function toggleSplitSection() {
   const toggleBtn = document.getElementById("toggleSplitBtn");
   
   if (splitSec.style.display === "none") {
+    renderSplitPeople();
     splitSec.style.display = "block";
     toggleBtn.textContent = "Verberg verdeling";
   } else {
@@ -2219,33 +2821,75 @@ function toggleSplitSection() {
   }
 }
 
+function normalizeAccountNumber(value) {
+  return String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+}
+
+function recipientForAccountNumber(value) {
+  const accountNumber = normalizeAccountNumber(value);
+  if (!accountNumber) return null;
+  const contact = (data.contacts || []).find(item => normalizeAccountNumber(item.account_number) === accountNumber);
+  if (contact) return { name: contact.name, accountNumber, type: 'Contact' };
+  const person = (data.peopleObjects || []).find(item => item.name !== currentUserName && normalizeAccountNumber(item.account_number) === accountNumber);
+  if (person) return { name: person.name, accountNumber, type: 'Persoon' };
+  const account = (data.accounts || []).find(item => normalizeAccountNumber(item.account_number) === accountNumber);
+  return account ? { name: account.name, accountNumber, type: 'Gezamenlijke rekening' } : null;
+}
+
+function selectContactRecipient() {
+  const select = document.getElementById('recipient');
+  document.getElementById('recipientAccountNumber').value = select.value || '';
+  lookupRecipientAccountNumber();
+}
+
+function lookupRecipientAccountNumber() {
+  const input = document.getElementById('recipientAccountNumber');
+  const lookup = document.getElementById('recipientLookup');
+  const recipient = recipientForAccountNumber(input.value);
+  const normalized = normalizeAccountNumber(input.value);
+  if (input.value && input.value !== normalized) input.value = normalized;
+  if (!normalized) {
+    lookup.className = 'recipient-lookup';
+    lookup.textContent = 'Kies een contact of voer een rekeningnummer in.';
+  } else if (recipient) {
+    lookup.className = 'recipient-lookup success';
+    lookup.textContent = `✓ ${recipient.name} gevonden`;
+  } else {
+    lookup.className = 'recipient-lookup error';
+    lookup.textContent = 'Geen contact of rekening gevonden met dit nummer.';
+  }
+  renderSplitPeople();
+}
+
 function renderSplitPeople() {
   const box = document.getElementById('splitPeople');
-  const selectedRecipient = document.getElementById('recipient').value;
-
-  let allTargets = [];
-
-  data.people.filter(p => p !== currentUserName).forEach(p => {
-    allTargets.push({ name: p, type: 'Persoon' });
+  const selectedRecipient = recipientForAccountNumber(document.getElementById('recipientAccountNumber').value);
+  const contactsByNumber = new Map();
+  (data.contacts || []).forEach(contact => {
+    const accountNumber = normalizeAccountNumber(contact.account_number);
+    if (accountNumber) contactsByNumber.set(accountNumber, {
+      name: contact.name,
+      accountNumber,
+      type: 'Contact'
+    });
   });
-
-  data.accounts.forEach(acc => {
-    if (acc.name !== currentUserName) {
-      allTargets.push({ name: acc.name, type: 'Gezamenlijk' });
-    }
-  });
+  let allTargets = [...contactsByNumber.values()];
+  if (selectedRecipient && !contactsByNumber.has(selectedRecipient.accountNumber)) allTargets.unshift(selectedRecipient);
+  if (selectedRecipient && contactsByNumber.has(selectedRecipient.accountNumber)) {
+    allTargets = allTargets.map(target => target.accountNumber === selectedRecipient.accountNumber ? selectedRecipient : target);
+  }
 
   if (!allTargets.length) {
-    box.innerHTML = '<div class="muted">Geen andere rekeningen of personen beschikbaar om te verdelen.</div>';
+    box.innerHTML = '<div class="muted">Voer eerst een rekeningnummer in of voeg een contact toe.</div>';
     return;
   }
 
   box.innerHTML = allTargets.map(target => {
-    const isChecked = (target.name === selectedRecipient);
+    const isChecked = selectedRecipient && target.accountNumber === selectedRecipient.accountNumber;
     const initialRatio = isChecked ? 100 : 0;
     
     return `
-      <div style="display:grid; grid-template-columns:1fr 90px 18px; gap:8px; align-items:center; margin:6px 0">
+      <div class="split-row" style="display:grid; grid-template-columns:1fr 90px 18px; gap:8px; align-items:center; margin:6px 0">
         <label style="margin:0; font-weight:500; cursor:pointer;">
           <input type="checkbox" class="split-check" data-person="${esc(target.name)}" ${isChecked ? 'checked' : ''} onchange="rebalanceSplitPercentages()"> 
           ${esc(target.name)} <small class="muted">(${target.type})</small>
@@ -2259,24 +2903,31 @@ function renderSplitPeople() {
   updateSplitTotal();
 }
 
+function getSplitRows() {
+  return [...document.querySelectorAll('#splitPeople .split-row')];
+}
+
 function rebalanceSplitPercentages() {
-  const rows = [...document.querySelectorAll('#splitPeople > div')];
-  const checked = rows.filter(r => r.querySelector('.split-check').checked);
+  const rows = getSplitRows();
+  const checked = rows.filter(r => r.querySelector('.split-check')?.checked);
   const share = checked.length ? 100 / checked.length : 0;
 
   rows.forEach(r => {
-    const isChecked = r.querySelector('.split-check').checked;
-    r.querySelector('.split-ratio').value = isChecked ? share.toFixed(2) : '0';
+    const checkbox = r.querySelector('.split-check');
+    const ratioInput = r.querySelector('.split-ratio');
+    if (!checkbox || !ratioInput) return;
+    ratioInput.value = checkbox.checked ? share.toFixed(2) : '0';
   });
   
   updateSplitTotal();
 }
 
 function updateSplitTotal() {
-  const rows = [...document.querySelectorAll('#splitPeople > div')];
+  const rows = getSplitRows();
   const total = rows.reduce((n, r) => {
-    const isChecked = r.querySelector('.split-check').checked;
-    return n + (isChecked ? (Number(r.querySelector('.split-ratio').value) || 0) : 0);
+    const checkbox = r.querySelector('.split-check');
+    const ratioInput = r.querySelector('.split-ratio');
+    return n + (checkbox?.checked ? (Number(ratioInput?.value) || 0) : 0);
   }, 0);
   const box = document.getElementById('splitTotal');
 
@@ -2289,9 +2940,15 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
   e.preventDefault();
   const amount = Number(document.getElementById("amount").value);
   const payer = currentUserName;
+  const recipient = recipientForAccountNumber(document.getElementById('recipientAccountNumber').value);
 
-  const rows = [...document.querySelectorAll('#splitPeople > div')];
-  const chosen = rows.filter(r => r.querySelector('.split-check').checked);
+  if (!recipient) {
+    alert('Voer een geldig rekeningnummer in of kies een opgeslagen contact.');
+    return;
+  }
+
+  const rows = getSplitRows();
+  const chosen = rows.filter(r => r.querySelector('.split-check')?.checked);
 
   if (!chosen.length) {
     alert("Selecteer a.u.b. ten minste 1 persoon of rekening waar deze kost voor is.");
@@ -2334,6 +2991,7 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
     clearReceipt();
     document.getElementById("date").value = today();
     await loadData(false);
+    showSuccessToast('Kost toegevoegd');
   } catch (err) {
     showAppError("Opslaan van de kost", err);
   }
@@ -2348,6 +3006,7 @@ document.getElementById("cashForm").addEventListener("submit", async e => {
   try {
     throwIfSupabaseError(await supabaseClient.from("cash_transactions").insert([{
       user_id: currentUserId,
+      cash_account_id: document.getElementById("cashAccountInput").value,
       amount: direction === "in" ? amount : -amount,
       description,
       transaction_date: document.getElementById("cashDate").value
@@ -2357,19 +3016,37 @@ document.getElementById("cashForm").addEventListener("submit", async e => {
     document.getElementById("cashDate").value = today();
     closeModal("cashModal");
     await loadData(false);
+    showSuccessToast(direction === 'in' ? 'Cash ingevoerd' : 'Cash uitgeboekt');
   } catch (err) {
     showAppError("Opslaan van de cashboeking", err);
   }
 });
 
+document.getElementById('contactForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = document.getElementById('contactName').value.trim();
+  const accountNumber = normalizeAccountNumber(document.getElementById('contactAccountNumber').value);
+  if (!name || !accountNumber) return;
+  try {
+    throwIfSupabaseError(await supabaseClient.from('contacts').insert([{ user_id: currentUserId, name, account_number: accountNumber }]));
+    document.getElementById('contactForm').reset();
+    await loadData(false);
+    renderContacts();
+    showSuccessToast('Contact toegevoegd');
+  } catch (err) {
+    showAppError('Opslaan van het contact', err);
+  }
+});
+
 document.getElementById("accountForm").addEventListener("submit", async e => {
   e.preventDefault();
-  if (userRole !== 'admin') {
+  if (!hasAdminView()) {
     alert("Enkel beheerders mogen dit aanpassen.");
     return;
   }
 
-  const isPersonal = document.querySelector('input[name="accountTypeToggle"]:checked').value === 'personal';
+  const accountType = document.querySelector('input[name="accountTypeToggle"]:checked').value;
+  const isPersonal = accountType === 'personal';
 
   try {
     if (isPersonal) {
@@ -2393,23 +3070,61 @@ document.getElementById("accountForm").addEventListener("submit", async e => {
       if (!name) return;
 
       const checkedMembers = [...document.querySelectorAll('input[name="accountMembers"]:checked')].map(el => el.value);
-
-      throwIfSupabaseError(await supabaseClient.from('accounts').insert([{ 
-        name, 
-        members: checkedMembers 
-      }]));
+      if (!checkedMembers.length) {
+        alert("Kies minstens één lid.");
+        return;
+      }
+      if (accountType === 'cash') {
+        throwIfSupabaseError(await supabaseClient.from('cash_accounts').insert([{ name, members: checkedMembers }]));
+      } else {
+        throwIfSupabaseError(await supabaseClient.from('accounts').insert([{ name, members: checkedMembers }]));
+      }
     }
 
     document.getElementById("accountForm").reset();
     closeModal("accountModal");
     await loadData(false);
+    showSuccessToast(accountType === 'cash' ? 'Cashrekening aangemaakt' : isPersonal ? 'Persoon toegevoegd' : 'Kostenrekening aangemaakt');
   } catch (err) {
     showAppError("Opslaan van de rekening of persoon", err);
   }
 });
 
+function requestDeleteManagedItem(type, id, name) {
+  if (!hasAdminView()) return;
+  pendingManagedDeletion = { type, id, name };
+  const subject = type === 'person' ? 'deze persoon' : type === 'cash' ? 'deze cashrekening en alle bijhorende cashboekingen' : 'deze kostenrekening';
+  document.getElementById('deleteAccountText').textContent = `Weet je zeker dat je ${subject} (${name}) wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.`;
+  openModal('deleteAccountModal');
+}
+
+async function confirmDeleteManagedItem() {
+  const target = pendingManagedDeletion;
+  if (!target || !hasAdminView()) return;
+  try {
+    if (target.type === 'person') {
+      throwIfSupabaseError(await supabaseClient.from('people').delete().eq('id', target.id));
+    } else if (target.type === 'cash') {
+      throwIfSupabaseError(await supabaseClient.from('cash_accounts').delete().eq('id', target.id));
+    } else {
+      throwIfSupabaseError(await supabaseClient.from('accounts').delete().eq('id', target.id));
+    }
+    if (target.type === 'cash' && selectedCashAccountId === target.id) {
+      selectedCashAccountId = null;
+      selectedPerson = currentUserName;
+    }
+    if (target.type === 'person' && selectedPerson === target.name) selectedPerson = currentUserName;
+    pendingManagedDeletion = null;
+    closeModal('deleteAccountModal');
+    await loadData(false);
+    showSuccessToast('Account verwijderd');
+  } catch (err) {
+    showAppError('Verwijderen', err);
+  }
+}
+
 async function initSession(session) {
-  const showLoader = isInitialLoad;
+  const showLoader = Boolean(session);
   if (showLoader) showLoading();
 
   try {
@@ -2432,6 +3147,7 @@ async function initSession(session) {
       }
       const meta = session.user.user_metadata || {};
       currentUserName = meta.display_name || currentUserEmail.split('@')[0];
+      adminViewEnabled = meta.admin_view_enabled !== false;
       setThemePreference(meta.theme_preference || themePreference);
 
       const { data: personData } = await supabaseClient
@@ -2455,7 +3171,7 @@ async function initSession(session) {
       updateNotificationSettingsUI();
       updatePasskeyUI();
       startExpensesRealtime();
-      await loadData(showLoader);
+      await loadData(false);
     } else {
       stopExpensesRealtime();
       updatePasskeyUI();
@@ -2468,6 +3184,7 @@ async function initSession(session) {
     console.error("Fout bij laden van sessie:", err);
     hideLoading();
   } finally {
+    if (session) hideLoading();
     isInitialLoad = false;
   }
 }
