@@ -334,7 +334,10 @@
     input:focus, select:focus { border-color: var(--primary); }
     select:disabled { background: var(--surface-subtle); color: var(--muted); cursor: not-allowed; }
 
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+    .row > div { min-width:0; }
+    .row input, .row select { min-width:0; max-width:100%; }
+    input[type="date"] { min-width:0; max-width:100%; -webkit-min-logical-width:0; }
     .full { width: 100%; margin-top: 16px; }
 
     .accounts-container { max-height: 420px; overflow-y: auto; }
@@ -435,13 +438,14 @@
     .modal.closing { pointer-events:none; animation: modal-backdrop-out .2s ease-in both; }
     .modal-card {
       background: var(--card-solid); border-radius: 18px; width: min(540px, 100%);
-      max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      max-height: 85vh; overflow-y: auto; overflow-x:hidden; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
       border: 1px solid var(--line);
     }
     .modal.open .modal-card { animation: ios-modal-pop .34s cubic-bezier(.2,.9,.25,1.18) both; }
     .modal.closing .modal-card { animation: ios-modal-dismiss .22s cubic-bezier(.4,0,1,1) both; }
     .modal-card.is-swiping { animation:none !important; transition:none; transform:translateY(var(--swipe-offset, 0px)) scale(.99); will-change:transform; }
     .modal-card.is-snapping-back { animation: ios-modal-snap-back .2s cubic-bezier(.2,.9,.25,1.18) both; }
+    .modal-swipe-handle { display:none; }
     @keyframes modal-backdrop-in { from { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } to { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); } }
     @keyframes modal-backdrop-out { from { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); } to { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } }
     @keyframes ios-modal-pop { from { opacity:0; transform:translateY(18px) scale(.92); } to { opacity:1; transform:translateY(0) scale(1); } }
@@ -604,6 +608,9 @@
       .app-message, .overdue-notice { align-items: flex-start; }
       .modal { align-items: flex-end; padding: 0; }
       .modal-card { width: 100%; max-height: 88vh; padding: 20px 16px max(20px, env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
+      .modal-swipe-handle { display:flex; align-items:center; justify-content:center; height:22px; margin:-12px 0 8px; touch-action:none; cursor:grab; }
+      .modal-swipe-handle::before { content:""; width:38px; height:5px; border-radius:999px; background:var(--muted); opacity:.55; }
+      .modal-swipe-handle:active { cursor:grabbing; }
       .close { min-height: 32px; }
     }
   </style>
@@ -2746,17 +2753,19 @@ function enableModalSwipeToClose() {
   document.querySelectorAll('.modal').forEach(modal => {
     const card = modal.querySelector('.modal-card');
     if (!card) return;
+    const handle = document.createElement('div');
+    handle.className = 'modal-swipe-handle';
+    handle.setAttribute('aria-hidden', 'true');
+    card.prepend(handle);
     let gesture = null;
 
-    card.addEventListener('pointerdown', event => {
-      if (event.pointerType === 'mouse' || event.target.closest('button, input, select, textarea, a')) return;
-      const cardTop = card.getBoundingClientRect().top;
-      if (event.clientY - cardTop > 74) return;
+    handle.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse') return;
       gesture = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, offset: 0, active: false };
-      card.setPointerCapture?.(event.pointerId);
+      handle.setPointerCapture?.(event.pointerId);
     });
 
-    card.addEventListener('pointermove', event => {
+    handle.addEventListener('pointermove', event => {
       if (!gesture || gesture.pointerId !== event.pointerId) return;
       const deltaX = event.clientX - gesture.startX;
       const deltaY = event.clientY - gesture.startY;
@@ -2775,10 +2784,10 @@ function enableModalSwipeToClose() {
       if (!gesture || gesture.pointerId !== event.pointerId) return;
       const { active, offset } = gesture;
       gesture = null;
-      if (card.hasPointerCapture?.(event.pointerId)) card.releasePointerCapture(event.pointerId);
+      if (handle.hasPointerCapture?.(event.pointerId)) handle.releasePointerCapture(event.pointerId);
       if (!active) return;
       card.classList.remove('is-swiping');
-      if (offset >= 80) {
+      if (offset >= 60) {
         closeModal(modal.id, offset);
         return;
       }
@@ -2789,8 +2798,8 @@ function enableModalSwipeToClose() {
       }, 210);
     };
 
-    card.addEventListener('pointerup', finishGesture);
-    card.addEventListener('pointercancel', finishGesture);
+    handle.addEventListener('pointerup', finishGesture);
+    handle.addEventListener('pointercancel', finishGesture);
   });
 }
 
