@@ -267,6 +267,8 @@
     .recipient-lookup { min-height:18px; margin:7px 2px 0; color:var(--muted); font-size:12px; }
     .recipient-lookup.success { color:var(--green); font-weight:650; }
     .recipient-lookup.error { color:var(--red); }
+    .contact-suggestions:not(:empty) { display:grid; gap:4px; margin-top:6px; }
+    .contact-suggestions button { margin:0; text-align:left; overflow-wrap:anywhere; }
     .cash-type-switch { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
     .cash-type-switch label { margin:0; cursor:pointer; }
     .cash-type-switch input { position:absolute; opacity:0; pointer-events:none; }
@@ -375,10 +377,29 @@
     .receipt-preview { display:none; margin-top:10px; align-items:center; gap:10px; padding:8px; background:var(--surface-subtle); border:1px solid var(--line); border-radius:10px; font-size:13px; }
     .receipt-preview.visible { display:flex; }
     .receipt-preview img { width:42px; height:42px; object-fit:cover; border-radius:7px; }
-    .receipt-source-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:6px; }
+    .receipt-source-actions { margin-top:6px; }
     .receipt-source-actions label { margin:0; min-height:44px; display:flex; align-items:center; justify-content:center; gap:7px; padding:9px; border:1px solid var(--line); border-radius:10px; background:var(--surface-subtle); color:var(--text); cursor:pointer; font-size:13px; font-weight:700; }
     .receipt-source-actions label:active { opacity:.72; }
+    .receipt-source-actions label:focus-within { outline:2px solid var(--primary); outline-offset:2px; }
     .receipt-source-actions input { position:absolute; width:1px; height:1px; min-height:0; opacity:0; pointer-events:none; }
+    .receipt-scan-feedback { display:flex; align-items:flex-start; gap:9px; margin-top:8px; font-size:13px; }
+    .receipt-scan-feedback .spinner { width:16px; height:16px; border-width:2px; flex:none; }
+    .receipt-scan-feedback .spinner[hidden] { display:none; }
+    .receipt-summary { margin-top:8px; padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface-subtle); font-size:13px; }
+    .receipt-summary div { padding:4px 0; overflow-wrap:anywhere; }
+    .expense-details { margin-top:12px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; }
+    .expense-details summary { cursor:pointer; padding:6px 0; font-weight:600; }
+    .split-section { margin-top:12px; padding:12px; background:var(--surface-subtle); color:var(--text); border-radius:12px; border:1px solid var(--line); }
+    .split-section > label { margin:0 0 8px; color:var(--text); }
+    .split-help { margin-bottom:10px; font-size:13px; }
+    .split-row { display:grid; grid-template-columns:minmax(0,1fr) 5rem auto; gap:8px; align-items:center; margin:6px 0; }
+    .split-row label { display:flex; align-items:center; gap:8px; margin:0; color:var(--text); cursor:pointer; overflow-wrap:anywhere; }
+    .split-row input[type="checkbox"] { flex:none; width:18px; height:18px; min-height:0; margin:0; accent-color:var(--primary); }
+    .split-row input[type="number"] { min-width:0; }
+    .split-section .msg-box.success-msg { color:#176534; }
+    .split-section .msg-box.error-msg { color:#9c2222; }
+    html[data-theme="dark"] .split-section .msg-box.success-msg { color:#9be6af; }
+    html[data-theme="dark"] .split-section .msg-box.error-msg { color:#ffb2ab; }
     .expense-category-row td { padding:16px 10px 6px; border:0; color:var(--muted); background:transparent; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
     .mobile-expenses { display:none; }
     .expense-mobile-card { padding:13px 14px; background:var(--card-solid); border-bottom:1px solid var(--line); }
@@ -443,16 +464,17 @@
     }
     .modal.open .modal-card { animation: ios-modal-pop .34s cubic-bezier(.2,.9,.25,1.18) both; }
     .modal.closing .modal-card { animation: ios-modal-dismiss .22s cubic-bezier(.4,0,1,1) both; }
-    .modal-card.is-swiping { animation:none !important; transition:none; transform:translateY(var(--swipe-offset, 0px)) scale(.99); will-change:transform; }
-    .modal-card.is-snapping-back { animation: ios-modal-snap-back .2s cubic-bezier(.2,.9,.25,1.18) both; }
+    .modal-card.is-swiping { animation:none !important; transition:none; transform:translateY(var(--swipe-offset, 0px)); will-change:transform; }
+    .modal.open .modal-card.is-snapping-back { animation: ios-modal-snap-back .24s cubic-bezier(.2,.8,.3,1) both; }
     .modal-swipe-handle { display:none; }
     @keyframes modal-backdrop-in { from { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } to { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); } }
     @keyframes modal-backdrop-out { from { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); } to { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } }
     @keyframes ios-modal-pop { from { opacity:0; transform:translateY(18px) scale(.92); } to { opacity:1; transform:translateY(0) scale(1); } }
     @keyframes ios-modal-dismiss { from { opacity:1; transform:translateY(var(--dismiss-offset, 0px)) scale(1); } to { opacity:0; transform:translateY(calc(var(--dismiss-offset, 0px) + 22px)) scale(.95); } }
-    @keyframes ios-modal-snap-back { from { transform:translateY(var(--swipe-offset, 0px)) scale(.99); } to { transform:translateY(0) scale(1); } }
+    @keyframes ios-modal-slide-away { from { transform:translateY(var(--dismiss-offset, 0px)); } to { transform:translateY(100vh); } }
+    @keyframes ios-modal-snap-back { from { transform:translateY(var(--swipe-offset, 0px)); } to { transform:translateY(0); } }
     @media (prefers-reduced-motion: reduce) {
-      .modal.open, .modal.closing, .modal.open .modal-card, .modal.closing .modal-card, .modal-card.is-snapping-back, #appWrap.is-account-switching .grid, #appWrap.is-account-switching .toolbar, #appWrap.is-account-switching .layout, #accountForm.is-type-switching > div, #activityCard.is-tab-switching .table-container, #activityCard.is-tab-switching .pagination, .loading-brand, .spinner { animation:none; }
+      .modal.open, .modal.closing, .modal.open .modal-card, .modal.closing .modal-card, .modal.open .modal-card.is-snapping-back, .modal.closing .modal-card.is-swipe-dismissed, #appWrap.is-account-switching .grid, #appWrap.is-account-switching .toolbar, #appWrap.is-account-switching .layout, #accountForm.is-type-switching > div, #activityCard.is-tab-switching .table-container, #activityCard.is-tab-switching .pagination, .loading-brand, .spinner { animation:none; }
       .app-toast { transition:none; }
       .type-switcher::before, .type-switcher label, .tabs::before, .tab-btn { transition:none; }
     }
@@ -608,10 +630,19 @@
       .app-message, .overdue-notice { align-items: flex-start; }
       .modal { align-items: flex-end; padding: 0; }
       .modal-card { width: 100%; max-height: 88vh; padding: 20px 16px max(20px, env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
-      .modal-swipe-handle { display:flex; align-items:center; justify-content:center; height:22px; margin:-12px 0 8px; touch-action:none; cursor:grab; }
-      .modal-swipe-handle::before { content:""; width:38px; height:5px; border-radius:999px; background:var(--muted); opacity:.55; }
-      .modal-swipe-handle:active { cursor:grabbing; }
       .close { min-height: 32px; }
+    }
+    @media (pointer:coarse) {
+      .modal-swipe-zone { margin:-18px -18px 0; padding:0 18px 1px; touch-action:none; user-select:none; -webkit-user-select:none; }
+      .modal-swipe-handle { display:flex; align-items:center; justify-content:center; height:34px; }
+      .modal-swipe-handle::before { content:""; width:38px; height:5px; border-radius:999px; background:var(--muted); opacity:.55; }
+      .modal-swipe-zone .modal-head { margin-bottom:10px; }
+    }
+    @media (pointer:coarse) and (max-width:480px) {
+      .modal-swipe-zone { margin:-20px -16px 0; padding-inline:16px; }
+    }
+    @media (prefers-reduced-motion:no-preference) {
+      .modal.closing .modal-card.is-swipe-dismissed { animation:ios-modal-slide-away .22s ease-in both; }
     }
   </style>
 </head>
@@ -878,46 +909,49 @@
   <div class="modal-card">
     <div class="modal-head"><h2>Nieuwe kost</h2><button class="close" onclick="closeModal('expenseModal')">×</button></div>
     <form id="expenseForm">
-      <label for="description">Omschrijving</label>
-      <input id="description" required placeholder="Bijv. Restaurant, Delhaize">
-
-      <div class="row">
-        <div><label for="amount">Totaalbedrag (€)</label><input id="amount" type="number" min="0.01" step="0.01" required placeholder="0,00"></div>
-        <div><label for="date">Datum</label><input id="date" type="date" required></div>
-      </div>
-
       <label>Kassaticket (optioneel)</label>
       <div class="receipt-source-actions">
-        <label>📷 Foto maken<input id="receiptCameraInput" type="file" accept="image/*" capture="environment" onchange="previewReceipt(this)"></label>
-        <label>🖼️ Kies uit galerij<input id="receiptGalleryInput" type="file" accept="image/*" onchange="previewReceipt(this)"></label>
+        <label>Uploaden<input id="receiptInput" type="file" accept="image/*" onchange="previewReceipt(this)"></label>
       </div>
       <div id="receiptPreview" class="receipt-preview">
         <img id="receiptPreviewImage" alt="Voorbeeld van kassaticket">
         <span id="receiptPreviewName"></span>
         <button type="button" class="small secondary" onclick="clearReceipt()">Verwijder</button>
       </div>
-
-      <div class="row" style="margin-top:14px;">
-        <div>
-          <label for="payer">Betaald door</label>
-          <select id="payer" disabled required></select>
-        </div>
-        <div>
-          <label for="recipient">Contact</label>
-          <select id="recipient" onchange="selectContactRecipient()"></select>
-        </div>
+      <div class="receipt-scan-feedback muted">
+        <div id="receiptScanSpinner" class="spinner" aria-hidden="true" hidden></div>
+        <span id="receiptScanStatus" role="status"></span>
       </div>
+      <div id="receiptSummary" class="receipt-summary" aria-label="Herkende kostgegevens" hidden>
+        <div data-field="description" hidden><span aria-hidden="true">🏪</span> Winkel: <strong></strong></div>
+        <div data-field="amount" hidden><span aria-hidden="true">💶</span> Bedrag: <strong></strong></div>
+        <div data-field="date" hidden><span aria-hidden="true">📅</span> Datum: <strong></strong></div>
+      </div>
+
+      <details id="expenseDetails" class="expense-details">
+        <summary>Kostgegevens invullen of aanpassen</summary>
+        <label for="description">Omschrijving</label>
+        <input id="description" required placeholder="Bijv. Restaurant, Delhaize">
+        <div class="row">
+          <div><label for="amount">Totaalbedrag (€)</label><input id="amount" type="number" min="0.01" step="0.01" required placeholder="0,00"></div>
+          <div><label for="date">Datum</label><input id="date" type="date" required></div>
+        </div>
+      </details>
+
+      <label for="recipient">Naam ontvanger</label>
+      <input id="recipient" required autocomplete="off" placeholder="Typ een naam" aria-describedby="recipientLookup" oninput="updateRecipientSuggestions()">
+      <div id="contactSuggestions" class="contact-suggestions" aria-label="Contactsuggesties"></div>
       <label for="recipientAccountNumber">Rekeningnummer</label>
       <input id="recipientAccountNumber" required autocomplete="off" autocapitalize="characters" placeholder="Bijv. PN-000001" oninput="lookupRecipientAccountNumber()">
-      <div id="recipientLookup" class="recipient-lookup">Kies een contact of voer een rekeningnummer in.</div>
+      <div id="recipientLookup" class="recipient-lookup" role="status">Kies een contact of vul de volledige naam en het rekeningnummer in.</div>
 
       <div style="margin-top:16px;">
         <button type="button" id="toggleSplitBtn" class="secondary full" onclick="toggleSplitSection()">⚙️ Verdeling aanpassen</button>
       </div>
 
-      <div id="splitSection" style="display:none; margin-top:12px; padding:12px; background:#f7f7fa; border-radius:12px; border:1px solid var(--line);">
-        <label style="margin:0 0 8px 0; font-weight:600; color:var(--text);">Splitsing aanpassen</label>
-        <div class="muted" style="font-size:12px; margin-bottom:10px;">Vink rekeningen/personen aan om te verdelen. Standaard staat alles gelijk verdeeld.</div>
+      <div id="splitSection" class="split-section" style="display:none;">
+        <label>Splitsing aanpassen</label>
+        <div class="split-help">Vink rekeningen/personen aan om te verdelen. Standaard staat alles gelijk verdeeld.</div>
         <div id="splitPeople"></div>
         <div id="splitTotal" class="msg-box" style="display:block; margin-top:8px;">Verdeling: 100%</div>
       </div>
@@ -1028,6 +1062,10 @@ let realtimeRefreshTimer = null;
 let appToastTimer = null;
 let accountTypeAnimationTimer = null;
 let receiptPreviewUrl = "";
+let receiptOcrLibrary;
+let receiptScanQueue = Promise.resolve();
+const receiptManualFields = new Set();
+const receiptAutofills = new Map();
 let cashBalanceHidden = false;
 
 // Sortering variabelen: Standaard op recentste datum (desc)
@@ -1505,31 +1543,327 @@ function expenseCategory(description) {
   return categories.find(([, pattern]) => pattern.test(text))?.[0] || "Overig";
 }
 
+document.getElementById("expenseForm").addEventListener("input", event => {
+  if (["description", "amount", "date"].includes(event.target.id)) {
+    receiptManualFields.add(event.target.id);
+    receiptAutofills.delete(event.target.id);
+    updateReceiptSummary(event.target.id);
+  }
+});
+document.getElementById("expenseForm").addEventListener("invalid", event => {
+  const details = document.getElementById("expenseDetails");
+  if (details.contains(event.target)) details.open = true;
+}, true);
+
+function updateReceiptSummary(id, show = false) {
+  const summary = document.getElementById("receiptSummary");
+  const row = summary.querySelector(`[data-field="${id}"]`);
+  if (!show && row.hidden) return;
+  const value = document.getElementById(id).value;
+  let displayValue = value;
+  if (value && id === "amount") {
+    displayValue = Number(value).toLocaleString("nl-BE", { style: "currency", currency: "EUR" });
+  } else if (value && id === "date") {
+    displayValue = value.split("-").reverse().join("/");
+  }
+  row.querySelector("strong").textContent = displayValue || "Niet ingevuld";
+  row.hidden = false;
+  summary.hidden = false;
+}
+
+function clearReceiptSummary() {
+  const summary = document.getElementById("receiptSummary");
+  summary.hidden = true;
+  for (const row of summary.children) {
+    row.hidden = true;
+    row.querySelector("strong").textContent = "";
+  }
+}
+
+function loadReceiptOcr() {
+  if (!receiptOcrLibrary) {
+    receiptOcrLibrary = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js";
+      script.onload = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error("OCR niet beschikbaar"));
+      script.onerror = reject;
+      document.head.append(script);
+    }).catch(error => {
+      receiptOcrLibrary = null;
+      throw error;
+    });
+  }
+  return receiptOcrLibrary;
+}
+
+function parseReceiptText(text) {
+  const lines = text.normalize("NFKC").split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const money = /\b(?:\d{1,3}(?:[.,' ]\d{3})+|\d+)\s*[,.]\s*\d{2}\b/g;
+  const payable = /(?:\bte\s+betalen\b|[àa]\s+payer\b|\b(?:amount|balance|total)\s+due\b|\bto\s+pay\b)/i;
+  const finalTotal = /\b(?:grand\s+total|total\s+ttc|total\s+amount|totaalbedrag|eindtotaal|gesamtbetrag|endbetrag|total\s+paid|amount\s+paid)\b/i;
+  const totals = /\b(?:totaa[l1i]|total|summe)\b/i;
+  const shortTotal = /^T\s*[L1I]\s*[:.]?(?=\s|€|$)/i;
+  const cardPayment = /^\s*(?:betaa[l1i]\s*automaat|bancontact|card payment|paiement par carte)\b/i;
+  const excluded = /\b(?:sub[\s-]*tot(?:aal|al)|sous.total|htva|excl|korting|discount|remise|besparing|wisselgeld|change|cash\s+tendered|total\s+(?:items|savings|tax|vat|discount)|aantal\s+artikelen)\b/i;
+  const foreignCurrency = /[$£]|\b(?:USD|GBP|CAD|AUD|CHF)\b/i;
+  const currency = /[€$£]|\b(?:EUR|USD|GBP|CAD|AUD|CHF)\b/gi;
+  const amountCandidates = [];
+  lines.forEach((line, index) => {
+    const payment = cardPayment.test(line);
+    const label = line.match(payable) || line.match(finalTotal) || line.match(totals) ||
+      line.match(shortTotal) || line.match(cardPayment);
+    if (!label || excluded.test(line)) return;
+    if (label[0].match(totals) && /^(?:btw|tva|vat|tax)\s+total\b/i.test(line)) return;
+    const tail = line.slice(label.index + label[0].length);
+    const before = line.slice(0, label.index).trim();
+    const following = lines[index + 1] || "";
+    const wrappedPayment = payment && /^(?:mastercard|visa|maestro|debit|credit|bcmc)\b/i.test(following);
+    const adjacent = (payment ? [following, ...(wrappedPayment ? [lines[index + 2]] : [])] :
+      [following, lines[index - 1]]).filter(Boolean);
+    const amountOnly = value => /^[\s\d.,':]+$/.test(value.replace(currency, ""));
+    const candidates = [tail, ...(amountOnly(before) ? [before] : [])].filter(value => value.match(money));
+    const sources = candidates.length ? candidates : adjacent.filter(value => amountOnly(value) ||
+      (wrappedPayment && value === following));
+    const rank = payment ? 0 : payable.test(label[0]) ? 30 : finalTotal.test(label[0]) ? 20 : 10;
+    for (const source of sources) {
+      const values = source.match(money);
+      if (!values || /[-−]\s*[€$£]?\s*\d/.test(source)) continue;
+      for (const raw of values) {
+        const separator = Math.max(raw.lastIndexOf("."), raw.lastIndexOf(","));
+        const value = Number(raw.slice(0, separator).replace(/\D/g, "") + "." + raw.slice(separator + 1).trim());
+        if (!Number.isFinite(value) || value <= 0) continue;
+        amountCandidates.push({
+          value: value.toFixed(2),
+          rank: rank + (candidates.length ? 2 : 0),
+          payment,
+          foreign: foreignCurrency.test(line + " " + source)
+        });
+      }
+    }
+  });
+  const paymentCandidates = amountCandidates.filter(candidate => candidate.payment);
+  const totalsFound = amountCandidates.filter(candidate => !candidate.payment);
+  const highestRank = Math.max(...totalsFound.map(candidate => candidate.rank));
+  const rankedTotals = totalsFound.filter(candidate => candidate.rank === highestRank);
+  const confirmed = rankedTotals.filter(total => paymentCandidates.some(payment =>
+    payment.value === total.value && payment.foreign === total.foreign));
+  const strongest = confirmed.length ? confirmed : rankedTotals.length ? rankedTotals : paymentCandidates;
+  const amountUncertain = new Set(strongest.map(candidate => candidate.value)).size > 1;
+  const amountCurrencyMismatch = strongest.some(candidate => candidate.foreign);
+  const amount = amountUncertain || amountCurrencyMismatch ? undefined : strongest[0]?.value;
+
+  let date;
+  let futureDateFound = false;
+  let dateRank = -1;
+  const dateLabel = /\b(?:datum|date|purchased on|transaction date)\b/i;
+  const usFormat = /\b(?:MM\s*[/.-]\s*DD|USD|US\$)\b/i.test(text) ||
+    /\$\s*\d/.test(text) && !/\b(?:CAD|AUD|NZD)\b/i.test(text);
+  const months = "jan feb mar apr may jun jul aug sep oct nov dec".split(" ");
+  const monthPattern = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
+  const dayFirst = new RegExp("\\b(\\d{1,2})(?:st|nd|rd|th)?[\\s.-]+(" + monthPattern + ")\\.?[\\s,.-]+(20\\d{2}|\\d{2})\\b", "i");
+  const monthFirst = new RegExp("\\b(" + monthPattern + ")\\.?[\\s.-]+(\\d{1,2})(?:st|nd|rd|th)?[\\s,.-]+(20\\d{2}|\\d{2})\\b", "i");
+  lines.forEach((line, index) => {
+    if (/\b(?:geldig|valid|expir\w*|vervaldatum|return by|best before)\b/i.test(line)) return;
+    const iso = line.match(/\b(20\d{2})\s*[-/.]\s*(\d{1,2})\s*[-/.]\s*(\d{1,2})\b/);
+    const numeric = line.match(/\b(\d{1,2})\s*[-/.]\s*(\d{1,2})\s*[-/.]\s*(20\d{2}|\d{2})\b/);
+    const named = line.match(monthFirst) || line.match(dayFirst);
+    let year, month, day;
+    if (iso) {
+      [, year, month, day] = iso;
+    } else if (named) {
+      const [, first, second, namedYear] = named;
+      const startsWithMonth = /^\p{L}/u.test(first);
+      day = startsWithMonth ? second : first;
+      month = String(months.indexOf((startsWithMonth ? first : second).slice(0, 3).toLowerCase()) + 1);
+      year = namedYear;
+    } else if (numeric) {
+      const [, first, second, numericYear] = numeric;
+      const monthComesFirst = Number(second) > 12 || (Number(first) <= 12 && usFormat);
+      [month, day] = monthComesFirst ? [first, second] : [second, first];
+      year = numericYear;
+    } else {
+      return;
+    }
+    const candidate = [year.padStart(4, "20"), month.padStart(2, "0"), day.padStart(2, "0")].join("-");
+    const timestamp = Date.parse(candidate);
+    const rank = dateLabel.test(line) ? 2 : dateLabel.test(lines[index - 1] || "") || /\b\d{1,2}:\d{2}\b/.test(line) ? 1 : 0;
+    if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== candidate) return;
+    if (candidate > today()) {
+      futureDateFound = true;
+      return;
+    }
+    if (rank > dateRank) {
+      date = candidate;
+      dateRank = rank;
+    }
+  });
+
+  return { fields: { description: readReceiptStore(lines), amount, date }, amountCurrencyMismatch, amountUncertain, futureDateFound };
+}
+
+function readReceiptStore(lines) {
+  const merchantsByVat = { "0460370809": "HEMA", "0437177416": "Zeeman" };
+  for (const line of lines) {
+    const vat = line.match(/\b(?:btw|tva|vat|be)\b[\s:.-]*(?:BE[\s.-]*)?(0(?:[\s.-]*\d){9})\b/i);
+    const merchant = vat && merchantsByVat[vat[1].replace(/\D/g, "")];
+    if (merchant) return merchant;
+  }
+
+  const brands = /\b(?:Albert\s+Heijn|Delhaize|Carrefour|Colruyt|Lidl|Aldi|Okay|Spar|Jumbo|Intermarché|Action|IKEA|Kruidvat|Hema|Zeeman|Tesco|Sainsbury['’]s|Waitrose)\b/i;
+  const header = lines.slice(0, 10).filter(line => !/\b(?:omschrijving|prijs|description|unit price)\b/i.test(line));
+  for (const line of header) {
+    const brand = line.match(brands);
+    if (brand && !/\b(?:straat|steenweg|rue|avenue|road|street)\b/i.test(line)) return brand[0];
+  }
+  const normalizePlace = value => value.toLowerCase().replace(/[^\p{L}]/gu, "");
+  const places = header.map(line => line.match(/^(?:[A-Z]{2}[-\s]*)?\d{4,5}\s+(\p{L}[\p{L}\s'-]*)$/u))
+    .filter(Boolean).map(match => normalizePlace(match[1]));
+  const address = /\b(?:rue|avenue|chaussée|boulevard|place|square|quai|route|street|road|lane|drive|postcode|postal code|bus|bte)\b|\p{L}*(?:straat|steenweg|laan|plein|dreef|lei|baan|kaai|markt|singel|weg)\b/iu;
+  return header.find(line => {
+    const candidate = line.replace(/^(?:winkel|merchant|store name)\s*:\s*/i, "");
+    return candidate.length <= 65 && /\p{L}{2}/u.test(candidate) &&
+      !places.includes(normalizePlace(candidate)) && !address.test(candidate) &&
+      !/\d|https?:|www\.|@|\b(?:ticket|kassaticket|welkom|welcome|bienvenue|bon|factuur|receipt|btw|tva|vat|tel|datum|date|totaal|total|belgië|belgium|belgique)\b/i.test(candidate);
+  })?.replace(/^(?:winkel|merchant|store name)\s*:\s*/i, "");
+}
+
+function restoreReceiptAutofills() {
+  for (const [id, original] of receiptAutofills) {
+    document.getElementById(id).value = original;
+  }
+  receiptAutofills.clear();
+}
+
+async function scanReceipt(file, url) {
+  const status = document.getElementById("receiptScanStatus");
+  if (url !== receiptPreviewUrl) return;
+  let worker;
+  try {
+    const ocr = await loadReceiptOcr();
+    if (url !== receiptPreviewUrl) return;
+    worker = await ocr.createWorker(["nld", "fra", "eng"]);
+    if (url !== receiptPreviewUrl) return;
+    const { data } = await worker.recognize(file, { rotateAuto: true });
+    if (url !== receiptPreviewUrl) return;
+
+    const filled = [];
+    const labels = { description: "winkel", amount: "totaalbedrag", date: "datum" };
+    let { fields, amountCurrencyMismatch, amountUncertain, futureDateFound } = parseReceiptText(data.text);
+    if (!fields.amount && !amountCurrencyMismatch && !receiptManualFields.has("amount")) {
+      try {
+        const preview = document.getElementById("receiptPreviewImage");
+        await preview.decode();
+        if (url !== receiptPreviewUrl) return;
+        const top = Math.floor(preview.naturalHeight * 0.55);
+        const height = preview.naturalHeight - top;
+        const left = Math.floor(preview.naturalWidth * 0.08);
+        const width = preview.naturalWidth - 2 * left;
+        const crop = document.createElement("canvas");
+        crop.width = Math.min(width, 1800);
+        crop.height = Math.round(height * crop.width / width);
+        const context = crop.getContext("2d");
+        context.filter = "grayscale(1) contrast(1.65)";
+        context.drawImage(preview, left, top, width, height, 0, 0, crop.width, crop.height);
+        // Read the two columns as a block so their labels and amounts stay together.
+        await worker.setParameters({ tessedit_pageseg_mode: "6" });
+        const { data: bottom } = await worker.recognize(crop);
+        const retry = parseReceiptText(bottom.text);
+        fields.amount = retry.fields.amount;
+        amountCurrencyMismatch = retry.amountCurrencyMismatch;
+        amountUncertain = !fields.amount && (amountUncertain || retry.amountUncertain);
+      } catch {
+        // Keep the values found in the first pass.
+      }
+    }
+    if (url !== receiptPreviewUrl) return;
+    if (!fields.description) {
+      // A separate pass over the header can pick up text in a stylized logo.
+      try {
+        const preview = document.getElementById("receiptPreviewImage");
+        await preview.decode();
+        if (url === receiptPreviewUrl) {
+          const canvas = document.createElement("canvas");
+          const cropHeight = Math.ceil(preview.naturalHeight * 0.25);
+          canvas.width = Math.min(preview.naturalWidth, 1600);
+          canvas.height = Math.ceil(cropHeight * canvas.width / preview.naturalWidth);
+          const context = canvas.getContext("2d");
+          await worker.setParameters({ tessedit_pageseg_mode: "11" });
+          for (const filter of ["grayscale(1) contrast(1.5)", "grayscale(1) invert(1) contrast(1.5)"]) {
+            if (url !== receiptPreviewUrl) return;
+            context.filter = filter;
+            context.drawImage(preview, 0, 0, preview.naturalWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+            const { data: header } = await worker.recognize(canvas);
+            const headerLines = header.text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+            fields.description = readReceiptStore(headerLines);
+            if (fields.description) break;
+          }
+        }
+      } catch {
+        // The full-ticket results are still usable if the header scan fails.
+      }
+    }
+    if (url !== receiptPreviewUrl) return;
+    for (const [id, value] of Object.entries(fields)) {
+      const field = document.getElementById(id);
+      if (!value || receiptManualFields.has(id) || (id !== "date" && field.value)) continue;
+      receiptAutofills.set(id, field.value);
+      field.value = value;
+      updateReceiptSummary(id, true);
+      filled.push(labels[id]);
+    }
+    status.textContent = filled.length
+      ? `Ingevuld: ${filled.join(", ")}. Controleer de gegevens vóór je opslaat.`
+      : "Geen velden automatisch ingevuld. Je kunt de gegevens zelf invullen.";
+    if (amountCurrencyMismatch) {
+      status.textContent += " Het ticket vermeldt een andere valuta. Vul zelf het bedrag in euro in.";
+    } else if (amountUncertain) {
+      status.textContent += " Meerdere mogelijke totalen gevonden. Vul het juiste bedrag zelf in.";
+    }
+    if (futureDateFound && !fields.date && !receiptManualFields.has("date")) {
+      status.textContent += " De datum op het ticket lijkt in de toekomst te liggen. Controleer het datumveld.";
+    }
+  } catch {
+    if (url === receiptPreviewUrl) {
+      status.textContent = "Het ticket kon niet automatisch worden uitgelezen. Je kunt de gegevens zelf invullen.";
+    }
+  } finally {
+    if (url === receiptPreviewUrl) document.getElementById("receiptScanSpinner").hidden = true;
+    if (worker) await worker.terminate().catch(() => {});
+  }
+}
+
 function previewReceipt(input) {
   const file = input.files?.[0];
   const preview = document.getElementById("receiptPreview");
   if (!file) return clearReceipt();
-  document.querySelectorAll("#receiptCameraInput, #receiptGalleryInput").forEach(otherInput => {
-    if (otherInput !== input) otherInput.value = "";
-  });
+  restoreReceiptAutofills();
+  clearReceiptSummary();
   if (receiptPreviewUrl) URL.revokeObjectURL(receiptPreviewUrl);
   receiptPreviewUrl = URL.createObjectURL(file);
   document.getElementById("receiptPreviewImage").src = receiptPreviewUrl;
   document.getElementById("receiptPreviewName").textContent = file.name;
   preview.classList.add("visible");
+  const status = document.getElementById("receiptScanStatus");
+  document.getElementById("receiptScanSpinner").hidden = false;
+  status.textContent = "Kassaticket wordt uitgelezen…";
+  const url = receiptPreviewUrl;
+  receiptScanQueue = receiptScanQueue.then(() => scanReceipt(file, url));
 }
 
 function clearReceipt() {
+  restoreReceiptAutofills();
+  clearReceiptSummary();
   if (receiptPreviewUrl) URL.revokeObjectURL(receiptPreviewUrl);
   receiptPreviewUrl = "";
-  document.querySelectorAll("#receiptCameraInput, #receiptGalleryInput").forEach(input => input.value = "");
+  document.getElementById("receiptInput").value = "";
   document.getElementById("receiptPreview").classList.remove("visible");
+  document.getElementById("receiptPreviewImage").removeAttribute("src");
+  document.getElementById("receiptScanStatus").textContent = "";
+  document.getElementById("receiptScanSpinner").hidden = true;
 }
 
 function getSelectedReceiptFile() {
-  return [...document.querySelectorAll("#receiptCameraInput, #receiptGalleryInput")]
-    .map(input => input.files?.[0])
-    .find(Boolean) || null;
+  return document.getElementById("receiptInput").files?.[0] || null;
 }
 
 async function compressReceipt(file) {
@@ -2102,17 +2436,6 @@ function render() {
     renderCashLedger();
     return;
   }
-
-  const payer = document.getElementById("payer");
-  payer.innerHTML = `<option value="${esc(currentUserName)}">${esc(currentUserName)}</option>`;
-  payer.disabled = true;
-
-  const recipientSelect = document.getElementById("recipient");
-  const previousRecipient = recipientSelect.value;
-  recipientSelect.innerHTML = `<option value="">Kies een contact</option>` + data.contacts
-    .map(contact => `<option value="${esc(contact.account_number)}">${esc(contact.name)}</option>`)
-    .join('');
-  if ([...recipientSelect.options].some(option => option.value === previousRecipient)) recipientSelect.value = previousRecipient;
 
   updateHeaderUserDisplay();
   renderOverdueExpensesNotice(targetPerson);
@@ -2715,10 +3038,6 @@ function openModal(id) {
     if (account) document.getElementById('cashAccountInput').value = account.id;
   }
   if(id === 'expenseModal') {
-    const payerSelect = document.getElementById("payer");
-    payerSelect.value = currentUserName;
-    payerSelect.disabled = true;
-    
     const splitSec = document.getElementById("splitSection");
     const toggleBtn = document.getElementById("toggleSplitBtn");
     splitSec.style.display = "none";
@@ -2726,7 +3045,8 @@ function openModal(id) {
     document.getElementById('recipient').value = '';
     document.getElementById('recipientAccountNumber').value = '';
     document.getElementById('recipientLookup').className = 'recipient-lookup';
-    document.getElementById('recipientLookup').textContent = 'Kies een contact of voer een rekeningnummer in.';
+    document.getElementById('recipientLookup').textContent = 'Kies een contact of vul de volledige naam en het rekeningnummer in.';
+    document.getElementById('contactSuggestions').replaceChildren();
     renderSplitPeople();
   }
 }
@@ -2735,8 +3055,9 @@ function closeModal(id, swipeOffset = 0) {
   const modal = document.getElementById(id);
   if (!modal || modal.classList.contains('closing') || !modal.classList.contains('open')) return;
   const card = modal.querySelector('.modal-card');
-  const offset = Math.max(0, Math.min(Number(swipeOffset) || 0, 180));
+  const offset = Math.max(0, Number(swipeOffset) || 0);
   card.classList.remove('is-swiping', 'is-snapping-back');
+  card.classList.toggle('is-swipe-dismissed', offset > 0);
   card.style.removeProperty('--swipe-offset');
   card.style.setProperty('--dismiss-offset', `${offset}px`);
   modal.classList.remove('open');
@@ -2744,6 +3065,7 @@ function closeModal(id, swipeOffset = 0) {
   const timer = setTimeout(() => {
     modal.classList.remove('closing');
     card.style.removeProperty('--dismiss-offset');
+    card.classList.remove('is-swipe-dismissed');
     modalCloseTimers.delete(id);
   }, 230);
   modalCloseTimers.set(id, timer);
@@ -2752,54 +3074,67 @@ function closeModal(id, swipeOffset = 0) {
 function enableModalSwipeToClose() {
   document.querySelectorAll('.modal').forEach(modal => {
     const card = modal.querySelector('.modal-card');
-    if (!card) return;
+    const header = card?.querySelector(':scope > .modal-head');
+    if (!header) return;
+    const zone = document.createElement('div');
+    zone.className = 'modal-swipe-zone';
     const handle = document.createElement('div');
     handle.className = 'modal-swipe-handle';
     handle.setAttribute('aria-hidden', 'true');
-    card.prepend(handle);
+    header.before(zone);
+    zone.append(handle, header);
     let gesture = null;
+    let snapTimer;
 
-    handle.addEventListener('pointerdown', event => {
-      if (event.pointerType === 'mouse') return;
-      gesture = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, offset: 0, active: false };
-      handle.setPointerCapture?.(event.pointerId);
+    zone.addEventListener('pointerdown', event => {
+      if (!event.isPrimary || event.pointerType === 'mouse' || gesture ||
+          event.target.closest('button, a, input, select, textarea')) return;
+      gesture = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, active: false };
+      zone.setPointerCapture?.(event.pointerId);
     });
 
-    handle.addEventListener('pointermove', event => {
+    zone.addEventListener('pointermove', event => {
       if (!gesture || gesture.pointerId !== event.pointerId) return;
       const deltaX = event.clientX - gesture.startX;
       const deltaY = event.clientY - gesture.startY;
       if (!gesture.active) {
-        if (deltaY < 0 || Math.abs(deltaX) > Math.abs(deltaY)) { gesture = null; return; }
-        if (deltaY < 8) return;
+        if (Math.hypot(deltaX, deltaY) < 6) return;
+        if (deltaY <= 0 || Math.abs(deltaX) > deltaY) { gesture = null; return; }
         gesture.active = true;
+        clearTimeout(snapTimer);
+        card.classList.remove('is-snapping-back');
         card.classList.add('is-swiping');
       }
-      gesture.offset = Math.min(deltaY, 180);
+      gesture.offset = Math.max(0, deltaY);
       card.style.setProperty('--swipe-offset', `${gesture.offset}px`);
       if (event.cancelable) event.preventDefault();
     }, { passive: false });
 
     const finishGesture = event => {
       if (!gesture || gesture.pointerId !== event.pointerId) return;
-      const { active, offset } = gesture;
+      const { active, startY, offset: lastOffset } = gesture;
       gesture = null;
-      if (handle.hasPointerCapture?.(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+      if (zone.hasPointerCapture?.(event.pointerId)) zone.releasePointerCapture(event.pointerId);
       if (!active) return;
+      const released = event.type === 'pointerup';
+      const offset = released ? Math.max(0, event.clientY - startY) : lastOffset;
+      card.style.setProperty('--swipe-offset', `${offset}px`);
       card.classList.remove('is-swiping');
-      if (offset >= 60) {
+      const threshold = Math.max(64, Math.min(140, card.offsetHeight * .3));
+      if (released && offset >= threshold) {
         closeModal(modal.id, offset);
         return;
       }
       card.classList.add('is-snapping-back');
-      setTimeout(() => {
+      snapTimer = setTimeout(() => {
         card.classList.remove('is-snapping-back');
         card.style.removeProperty('--swipe-offset');
-      }, 210);
+      }, 250);
     };
 
-    handle.addEventListener('pointerup', finishGesture);
-    handle.addEventListener('pointercancel', finishGesture);
+    zone.addEventListener('pointerup', finishGesture);
+    zone.addEventListener('pointercancel', finishGesture);
+    zone.addEventListener('lostpointercapture', finishGesture);
   });
 }
 
@@ -2837,48 +3172,80 @@ function normalizeAccountNumber(value) {
 function recipientForAccountNumber(value) {
   const accountNumber = normalizeAccountNumber(value);
   if (!accountNumber) return null;
-  const contact = (data.contacts || []).find(item => normalizeAccountNumber(item.account_number) === accountNumber);
-  if (contact) return { name: contact.name, accountNumber, type: 'Contact' };
   const person = (data.peopleObjects || []).find(item => item.name !== currentUserName && normalizeAccountNumber(item.account_number) === accountNumber);
   if (person) return { name: person.name, accountNumber, type: 'Persoon' };
   const account = (data.accounts || []).find(item => normalizeAccountNumber(item.account_number) === accountNumber);
   return account ? { name: account.name, accountNumber, type: 'Gezamenlijke rekening' } : null;
 }
 
-function selectContactRecipient() {
-  const select = document.getElementById('recipient');
-  document.getElementById('recipientAccountNumber').value = select.value || '';
+function normalizeRecipientName(value) {
+  return value.normalize('NFD').replace(/\p{M}/gu, '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function getVerifiedRecipient() {
+  const name = normalizeRecipientName(document.getElementById('recipient').value);
+  const target = recipientForAccountNumber(document.getElementById('recipientAccountNumber').value);
+  if (!name || !target) return null;
+  if (normalizeRecipientName(target.name) === name) return target;
+  const contact = data.contacts.find(item => normalizeAccountNumber(item.account_number) === target.accountNumber &&
+    normalizeRecipientName(item.name) === name);
+  return contact ? { ...target, displayName: contact.name, type: 'Contact' } : null;
+}
+
+function updateRecipientSuggestions() {
+  const input = document.getElementById('recipient');
+  const list = document.getElementById('contactSuggestions');
+  const query = normalizeRecipientName(input.value);
+  list.replaceChildren();
+  if (query) {
+    const matches = data.contacts.filter(contact => normalizeRecipientName(contact.name).includes(query)).slice(0, 6);
+    for (const contact of matches) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'secondary';
+      button.textContent = `${contact.name} · ${contact.account_number}`;
+      button.addEventListener('click', () => {
+        input.value = contact.name;
+        document.getElementById('recipientAccountNumber').value = normalizeAccountNumber(contact.account_number);
+        input.focus();
+        list.replaceChildren();
+        lookupRecipientAccountNumber();
+      });
+      list.append(button);
+    }
+  }
   lookupRecipientAccountNumber();
 }
 
 function lookupRecipientAccountNumber() {
   const input = document.getElementById('recipientAccountNumber');
   const lookup = document.getElementById('recipientLookup');
-  const recipient = recipientForAccountNumber(input.value);
+  const recipient = getVerifiedRecipient();
   const normalized = normalizeAccountNumber(input.value);
   if (input.value && input.value !== normalized) input.value = normalized;
-  if (!normalized) {
+  if (!normalized || !document.getElementById('recipient').value.trim()) {
     lookup.className = 'recipient-lookup';
-    lookup.textContent = 'Kies een contact of voer een rekeningnummer in.';
+    lookup.textContent = 'Kies een contact of vul de volledige naam en het rekeningnummer in.';
   } else if (recipient) {
     lookup.className = 'recipient-lookup success';
-    lookup.textContent = `✓ ${recipient.name} gevonden`;
+    lookup.textContent = `✓ ${recipient.displayName || recipient.name} bevestigd`;
   } else {
     lookup.className = 'recipient-lookup error';
-    lookup.textContent = 'Geen contact of rekening gevonden met dit nummer.';
+    lookup.textContent = 'Deze combinatie van naam en rekeningnummer kon niet worden bevestigd.';
   }
   renderSplitPeople();
 }
 
 function renderSplitPeople() {
   const box = document.getElementById('splitPeople');
-  const selectedRecipient = recipientForAccountNumber(document.getElementById('recipientAccountNumber').value);
+  const selectedRecipient = getVerifiedRecipient();
   const contactsByNumber = new Map();
   (data.contacts || []).forEach(contact => {
     const accountNumber = normalizeAccountNumber(contact.account_number);
-    if (accountNumber) contactsByNumber.set(accountNumber, {
-      name: contact.name,
-      accountNumber,
+    const target = recipientForAccountNumber(accountNumber);
+    if (target) contactsByNumber.set(accountNumber, {
+      ...target,
+      displayName: contact.name,
       type: 'Contact'
     });
   });
@@ -2898,10 +3265,10 @@ function renderSplitPeople() {
     const initialRatio = isChecked ? 100 : 0;
     
     return `
-      <div class="split-row" style="display:grid; grid-template-columns:1fr 90px 18px; gap:8px; align-items:center; margin:6px 0">
-        <label style="margin:0; font-weight:500; cursor:pointer;">
+      <div class="split-row">
+        <label>
           <input type="checkbox" class="split-check" data-person="${esc(target.name)}" ${isChecked ? 'checked' : ''} onchange="rebalanceSplitPercentages()"> 
-          ${esc(target.name)} <small class="muted">(${target.type})</small>
+          <span>${esc(target.displayName || target.name)} <small>(${target.type})</small></span>
         </label>
         <input class="split-ratio" data-person="${esc(target.name)}" type="number" min="0" step="0.01" value="${initialRatio}" oninput="updateSplitTotal()">
         <span>%</span>
@@ -2949,10 +3316,10 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
   e.preventDefault();
   const amount = Number(document.getElementById("amount").value);
   const payer = currentUserName;
-  const recipient = recipientForAccountNumber(document.getElementById('recipientAccountNumber').value);
+  const recipient = getVerifiedRecipient();
 
   if (!recipient) {
-    alert('Voer een geldig rekeningnummer in of kies een opgeslagen contact.');
+    alert('Kies een geldig contact of controleer de naam en het rekeningnummer.');
     return;
   }
 
@@ -2996,8 +3363,10 @@ document.getElementById("expenseForm").addEventListener("submit", async e => {
     const expense = throwIfSupabaseError(await supabaseClient.from('expenses').insert([newExpense]).select().single());
     if (receiptFile) await uploadReceipt(expense.id, receiptFile);
     closeModal("expenseModal");
-    document.getElementById("expenseForm").reset();
     clearReceipt();
+    document.getElementById("expenseForm").reset();
+    document.getElementById("expenseDetails").open = false;
+    receiptManualFields.clear();
     document.getElementById("date").value = today();
     await loadData(false);
     showSuccessToast('Kost toegevoegd');
