@@ -1,4 +1,4 @@
-const CACHE_NAME = "paynote-shell-v8";
+const CACHE_NAME = "paynote-shell-v19";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./favicon.ico", "./paynote-logo.png"];
 
 self.addEventListener("install", event => {
